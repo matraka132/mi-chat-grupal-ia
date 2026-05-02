@@ -70,9 +70,9 @@ if st.button("🚀 Iniciar Debate e Inter-Corrección"):
         
         with st.spinner("Los expertos están redactando..."):
             # Usamos IDs de modelos más estándar de OpenRouter
-            res_gpt = consultar_ia("openai/gpt-4o", pregunta, api_key)
-            res_gemini = consultar_ia("google/gemini-pro-1.5", pregunta, api_key)
-            res_grok = consultar_ia("x-ai/grok-3", pregunta, api_key)
+           res_gpt = consultar_ia("openai/gpt-4o", pregunta, api_key)
+           res_gemini = consultar_ia("google/gemini-flash-1.5", pregunta, api_key) # Cambiado a Flash para asegurar compatibilidad
+           res_grok = consultar_ia("x-ai/grok-3", pregunta, api_key)
 
             with col1:
                 st.markdown("### 🟢 ChatGPT-4o")
@@ -101,5 +101,5 @@ if st.button("🚀 Iniciar Debate e Inter-Corrección"):
                 3: {res_grok}
                 """
                 # Usamos Gemini para la síntesis final por su gran capacidad de razonamiento
-                res_final = consultar_ia("google/gemini-pro-1.5", prompt_final, api_key)
+               res_final = consultar_ia("google/gemini-flash-1.5", prompt_final, api_key)
                 st.success(res_final)
