@@ -67,7 +67,7 @@ if st.button("🚀 Iniciar Debate"):
         with st.spinner('Los expertos están redactando...'):
             # Los IDs de modelos que mejor funcionan en OpenRouter actualmente:
             res_gpt = consultar_ia("openai/gpt-4o", pregunta, api_key)
-            res_gemini = consultar_ia("google/gemini-pro-latest", pregunta, api_key)
+            res_gemini = consultar_ia("~google/gemini-pro-latest", pregunta, api_key)
             res_grok = consultar_ia("x-ai/grok-3", pregunta, api_key)
 
             with col1:
@@ -101,6 +101,6 @@ if st.button("🚀 Iniciar Debate"):
                 Respuesta 3 (Grok): {res_grok}
                 """
                 # Usamos Gemini Pro para la síntesis por su capacidad de razonamiento
-                res_final = consultar_ia("google/gemini-pro-latest", prompt_final, api_key)
+                res_final = consultar_ia("~google/gemini-pro-latest", prompt_final, api_key)
                 
                 st.success(res_final)
