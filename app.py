@@ -66,9 +66,9 @@ if st.button("🚀 Iniciar Debate"):
         
         with st.spinner('Los expertos están redactando...'):
             # Los IDs de modelos que mejor funcionan en OpenRouter actualmente:
-            res_gpt = consultar_ia("openai/gpt-4o", pregunta, api_key)
+            res_gpt = consultar_ia("openai/gpt-5-chat", pregunta, api_key)
             res_gemini = consultar_ia("~google/gemini-pro-latest", pregunta, api_key)
-            res_grok = consultar_ia("x-ai/grok-3", pregunta, api_key)
+            res_grok = consultar_ia("x-ai/grok-4.3", pregunta, api_key)
 
             with col1:
                 st.markdown("### 🟢 ChatGPT-4o")
