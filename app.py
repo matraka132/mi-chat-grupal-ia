@@ -69,7 +69,7 @@ if st.button("🚀 Iniciar Debate Multilateral"):
             ("openai/gpt-4o", "🟢 GPT-4o"),
             ("~google/gemini-pro-latest", "🔵 Gemini 1.5 Pro"),
             ("x-ai/grok-3", "⚫ Grok 3"),
-            ("anthropic/claude-3.5-sonnet", "🟠 Claude 3.5"),
+            ("~anthropic/claude-sonnet-latest", "🟠 Claude 3.5"),
             ("deepseek/deepseek-r1", "🔴 DeepSeek R1")
         ]
         
