@@ -104,6 +104,6 @@ if st.button("🚀 Iniciar Debate Multilateral"):
             """
             
             # Usamos Claude 3.5 o Gemini Pro para la síntesis por su excelente juicio
-            veredicto = consultar_ia("anthropic/claude-3.5-sonnet", prompt_final, api_key)
+            veredicto = consultar_ia("~anthropic/claude-sonnet-latest", prompt_final, api_key)
             
             st.success(veredicto)
