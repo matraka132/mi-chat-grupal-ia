@@ -107,9 +107,9 @@ if st.button("🚀 Iniciar Proceso de Consenso"):
         
         with st.spinner('Los matemáticos y analistas debaten las probabilidades...'):
             res_deepseek = consultar_ia("deepseek/deepseek-chat", prompt_debate, api_key, "Eres DeepSeek Coder. Tu fuerte es la lógica matemática pura y el cálculo de probabilidades.")
-            res_codestral = consultar_ia("mistralai/codestral-22b-", prompt_debate, api_key, "Eres el Auditor Eficiente. Encuentra contradicciones numéricas entre los reportes.")
-            res_grok = consultar_ia("x-ai/grok-3", prompt_debate, api_key, "Eres Grok 3. Analiza las tendencias de última hora y el movimiento de líneas coloquiales.")
-            res_gemini = consultar_ia("google/gemini-pro-1.5", prompt_debate, api_key, "Eres Gemini. Procesa todo el contexto masivo de las respuestas previas.")
+            res_codestral = consultar_ia("mistralai/codestral-2508", prompt_debate, api_key, "Eres el Auditor Eficiente. Encuentra contradicciones numéricas entre los reportes.")
+            res_grok = consultar_ia("x-ai/grok-4.3", prompt_debate, api_key, "Eres Grok 3. Analiza las tendencias de última hora y el movimiento de líneas coloquiales.")
+            res_gemini = consultar_ia("~google/gemini-pro-latest", prompt_debate, api_key, "Eres Gemini. Procesa todo el contexto masivo de las respuestas previas.")
 
             with col4:
                 st.markdown("### 📐 DeepSeek (Matemático)")
@@ -149,8 +149,8 @@ if st.button("🚀 Iniciar Proceso de Consenso"):
         
         with st.spinner('Los Jueces Finales (Modelos de Razonamiento) están dictaminando...'):
             # OpenAI o1/o3 o Claude 3.5 Sonnet actúan como el tribunal supremo
-            res_openai_o = consultar_ia("openai/o1-mini", debate_completo, api_key, "Eres el Pensador Profundo de OpenAI. Tu fortaleza es la lógica estricta. Dictamina el pick con mayor valor real.")
-            res_claude = consultar_ia("anthropic/claude-3.5-sonnet", debate_completo, api_key, "Eres el Analista Clínico de Anthropic. Revisa los argumentos de todos, elimina contradicciones y redacta la conclusión definitiva de forma estructurada.")
+            res_openai_o = consultar_ia("openai/o1-pro", debate_completo, api_key, "Eres el Pensador Profundo de OpenAI. Tu fortaleza es la lógica estricta. Dictamina el pick con mayor valor real.")
+            res_claude = consultar_ia("anthropic/claude-3.5-haiku", debate_completo, api_key, "Eres el Analista Clínico de Anthropic. Revisa los argumentos de todos, elimina contradicciones y redacta la conclusión definitiva de forma estructurada.")
             
             with col_juez1:
                 st.markdown("### 🧠 OpenAI o1-mini (Lógica Pura)")
