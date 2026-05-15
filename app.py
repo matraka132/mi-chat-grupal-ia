@@ -149,7 +149,7 @@ if st.button("🚀 Iniciar Proceso de Consenso"):
         
         with st.spinner('Los Jueces Finales (Modelos de Razonamiento) están dictaminando...'):
             # OpenAI o1/o3 o Claude 3.5 Sonnet actúan como el tribunal supremo
-            res_openai_o = consultar_ia("openai/o1-pro", debate_completo, api_key, "Eres el Pensador Profundo de OpenAI. Tu fortaleza es la lógica estricta. Dictamina el pick con mayor valor real.")
+            res_openai_o = consultar_ia("openai/o4-mini-deep-research", debate_completo, api_key, "Eres el Pensador Profundo de OpenAI. Tu fortaleza es la lógica estricta. Dictamina el pick con mayor valor real.")
             res_claude = consultar_ia("anthropic/claude-3.5-haiku", debate_completo, api_key, "Eres el Analista Clínico de Anthropic. Revisa los argumentos de todos, elimina contradicciones y redacta la conclusión definitiva de forma estructurada.")
             
             with col_juez1:
