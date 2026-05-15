@@ -71,8 +71,8 @@ if st.button("🚀 Iniciar Proceso de Consenso"):
         
         with st.spinner('Perplexity investiga la web, Cohere y Llama analizan...'):
             # Usamos IDs estándar y compatibles de OpenRouter
-            res_perplexity = consultar_ia("perplexity/sonar-reasoning", pregunta, api_key, "Eres el Fact-Checker. Trae datos reales, climas, estadios o lesiones de última hora.")
-            res_cohere = consultar_ia("cohere/command-r-plus", pregunta, api_key, "Eres el Administrador de Datos. Cruza las estadísticas frías sin inventar nada.")
+            res_perplexity = consultar_ia("perplexity/sonar-pro-search", pregunta, api_key, "Eres el Fact-Checker. Trae datos reales, climas, estadios o lesiones de última hora.")
+            res_cohere = consultar_ia("cohere/command-a", pregunta, api_key, "Eres el Administrador de Datos. Cruza las estadísticas frías sin inventar nada.")
             res_llama = consultar_ia("meta-llama/llama-3-70b-instruct", pregunta, api_key, "Eres el Generalista Rápido. Da una perspectiva estadística directa.")
 
             with col1:
