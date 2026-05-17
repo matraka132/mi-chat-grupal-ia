@@ -4,8 +4,8 @@ import json
 
 # 1. Configuración de la interfaz
 st.set_page_config(page_title="Súper-Consenso Triple", layout="wide")
-st.title("🏛️ El Súper-Coliseo: Flujo de Co-Auditoría Triple (Modo Ultra-Compreso)")
-st.markdown("Fase 1: Rastreo | Fase 2: Co-Auditoría | Fase 3: Analistas | Fase 4: Veredicto | **Optimizado para ahorro de tokens**")
+st.title("🏛️ El Súper-Coliseo: Flujo de Co-Auditoría Triple (Web Activa)")
+st.markdown("Fase 1: Rastreo Real | Fase 2: Co-Auditoría | Fase 3: Analistas | Fase 4: Veredicto de Claude")
 
 # Barra lateral para la API Key
 with st.sidebar:
@@ -26,16 +26,17 @@ PROMPT_CERRADO = (
     "Responde usando datos crudos, palabras clave y viñetas cortas. Prohibido generar URLs o enlaces.\n\n"
 )
 
-# Función centralizada de consulta
-def consultar_ia(model_id, prompt, key, system_role, max_tokens=800, ambiente_cerrado=True):
+# Función centralizada de consulta con soporte de búsqueda web real
+def consultar_ia(model_id, prompt, key, system_role, max_tokens=1000, forzar_web=False):
     headers = {
         "Authorization": f"Bearer {key.strip()}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://streamlit.app",
-        "X-Title": "Súper-Coliseo Ultra-Compreso"
+        "X-Title": "Súper-Coliseo Web Activa"
     }
     
-    prompt_sistema = (PROMPT_CERRADO + system_role) if ambiente_cerrado else system_role
+    # Si no es Grok buscando en la web, aplica el prompt cerrado estricto
+    prompt_sistema = system_role if forzar_web else (PROMPT_CERRADO + system_role)
     
     payload = {
         "model": model_id,
@@ -45,6 +46,12 @@ def consultar_ia(model_id, prompt, key, system_role, max_tokens=800, ambiente_ce
         ],
         "max_tokens": max_tokens
     }
+    
+    # ESTO FUERZA A OPENROUTER A USAR EL BUSCADOR DE GROK
+    if forzar_web:
+        payload["provider"] = {
+            "plugins": [{"id": "web_search"}]
+        }
     
     try:
         response = requests.post(
@@ -57,18 +64,12 @@ def consultar_ia(model_id, prompt, key, system_role, max_tokens=800, ambiente_ce
             return f"❌ Error en {model_id}: {response.text}"
             
         texto = response.json()["choices"][0]["message"]["content"]
-        
-        # Limpieza rápida de URLs
-        if "http" in texto.lower():
-            for word in texto.split():
-                if "http" in word.lower():
-                    texto = texto.replace(word, "[Clean]")
         return texto
     except Exception as e:
         return f"❌ Error de conexión en {model_id}: {str(e)}"
 
 # Entrada de datos de Hard Rock Bet
-lineas_raw = st.text_area("📋 Pega las líneas de Hard Rock Bet aquí:", height=150, placeholder="Ej:\nOrioles\nNationals\n-1.5 (+125)")
+lineas_raw = st.text_area("📋 Pega las líneas de Hard Rock Bet aquí:", height=150, placeholder="Ej:\nYankees\nMets\n-1.5 (+165)")
 
 if st.button("🚀 Iniciar Ciclo del Súper-Coliseo"):
     if not api_key:
@@ -78,33 +79,33 @@ if st.button("🚀 Iniciar Ciclo del Súper-Coliseo"):
     else:
         
         # Identificadores Oficiales de Modelos
-        GROK = "x-ai/grok-4.3"
+        GROK = "x-ai/grok-2-search"
         GEMINI = "google/gemini-2.5-pro"
-        CLAUDE = "anthropic/claude-sonnet-4.5"
+        CLAUDE = "anthropic/claude-3.5-sonnet"
 
         # =========================================================
-        # FASE 1: INVESTIGACIÓN TRIPLE (Formato Compacto)
+        # FASE 1: INVESTIGACIÓN TRIPLE (Búsqueda Web Forzada)
         # =========================================================
         st.header("🔍 Fase 1: Investigación y Rastreo Triple")
         col_inv1, col_inv2, col_inv3 = st.columns(3)
         
-        with st.spinner("Buscando y comprimiendo datos de la web..."):
+        with st.spinner("Forzando a Grok a navegar por internet..."):
             
             role_grok_web = (
-                "Eres Grok 2 Web. Busca en internet para las líneas dadas para hoy domingo 17 de mayo de 2026. "
-                "Entrega SOLO estos datos en formato telegrama: "
-                "Lanzadores: [Nombre, mano, ERA]. Clima: [Temp, viento dir/vel, tipo estadio]. Bajas: [Nombres clave]. "
-                "Prohibido usar retórica, sé directo y minimalista. No pongas enlaces."
+                "Eres Grok 2 con el buscador web activado. Tu meta es buscar en internet la información real para este partido de MLB de HOY. "
+                "Encuentra obligatoriamente: 1) Lanzadores abridores confirmados y su mano (L o R). 2) Clima exacto del estadio y viento. "
+                "3) Lesionados de última hora. Resume todo en viñetas ultra-cortas sin enlaces."
             )
             
-            res_grok_inv = consultar_ia(GROK, lineas_raw, api_key, role_grok_web, max_tokens=600, ambiente_cerrado=False)
+            # Activamos 'forzar_web=True' para obligar a OpenRouter a conectarse a internet
+            res_grok_inv = consultar_ia(GROK, lineas_raw, api_key, role_grok_web, max_tokens=800, forzar_web=True)
             
-            role_inv_resto = "Resume al máximo la información web provista. Formato estricto: * Lanzadores: * Clima/Estadio: * Bajas:. Sin palabras extra."
-            res_gemini_inv = consultar_ia(GEMINI, f"Líneas: {lineas_raw}\nWeb: {res_grok_inv}", api_key, f"Gemini-Search. {role_inv_resto}", max_tokens=500)
-            res_claude_inv = consultar_ia(CLAUDE, f"Líneas: {lineas_raw}\nData: {res_gemini_inv}", api_key, f"Claude-Scout. {role_inv_resto}", max_tokens=500)
+            role_inv_resto = "Resume al máximo la información web provista por Grok. Formato estricto: * Lanzadores: * Clima/Estadio: * Bajas:. Sin palabras extra."
+            res_gemini_inv = consultar_ia(GEMINI, f"Líneas: {lineas_raw}\nWeb de Grok: {res_grok_inv}", api_key, f"Gemini-Search. {role_inv_resto}", max_tokens=600)
+            res_claude_inv = consultar_ia(CLAUDE, f"Líneas: {lineas_raw}\nData: {res_gemini_inv}", api_key, f"Claude-Scout. {role_inv_resto}", max_tokens=600)
             
             with col_inv1:
-                st.markdown("### ⚫ Grok 2 (Data Cruda)")
+                st.markdown("### ⚫ Grok 2 (Búsqueda Web Real)")
                 st.info(res_grok_inv)
             with col_inv2:
                 st.markdown("### 🔵 Gemini (Compreso)")
@@ -116,20 +117,20 @@ if st.button("🚀 Iniciar Ciclo del Súper-Coliseo"):
         st.divider()
 
         # =========================================================
-        # FASE 2: AUDITORÍA TRIPLE CRUZADA (Filtro Inteligente)
+        # FASE 2: AUDITORÍA TRIPLE CRUZADA
         # =========================================================
-        st.header("🛡️ Fase 2: Co-Auditoría Cruzada (Compactación y Certificación)")
+        st.header("🛡️ Fase 2: Co-Auditoría Cruzada (Compactación)")
         col_aud1, col_aud2, col_aud3 = st.columns(3)
         
         prompt_auditoria = f"Líneas: {lineas_raw}\nGrok: {res_grok_inv}\nGemini: {res_gemini_inv}\nClaude: {res_claude_inv}"
         
-        with st.spinner("Cruzando y unificando datos en un esquema mínimo..."):
+        with st.spinner("Cruzando y unificando datos..."):
             
-            role_aud = "Detecta contradicciones entre los reportes. Genera una única lista consolidada de datos VERIFICADOS. Elimina redundancias. Sé ultra-breve."
+            role_aud = "Detecta contradicciones. Genera una única lista consolidada de datos VERIFICADOS. Elimina redundanzas. Sé ultra-breve."
             
-            aud_grok = consultar_ia(GROK, prompt_auditoria, api_key, f"Auditor Grok. {role_aud}", max_tokens=500)
-            aud_gemini = consultar_ia(GEMINI, f"{prompt_auditoria}\nGrok: {aud_grok}", api_key, f"Auditor Gemini. {role_aud}", max_tokens=500)
-            aud_claude = consultar_ia(CLAUDE, f"{prompt_auditoria}\nGemini: {aud_gemini}", api_key, f"Auditor Jefe Claude. {role_aud}", max_tokens=600)
+            aud_grok = consultar_ia(GROK, prompt_auditoria, api_key, f"Auditor Grok. {role_aud}", max_tokens=600)
+            aud_gemini = consultar_ia(GEMINI, f"{prompt_auditoria}\nGrok: {aud_grok}", api_key, f"Auditor Gemini. {role_aud}", max_tokens=600)
+            aud_claude = consultar_ia(CLAUDE, f"{prompt_auditoria}\nGemini: {aud_gemini}", api_key, f"Auditor Jefe Claude. {role_aud}", max_tokens=800)
             
             with col_aud1:
                 st.markdown("### 🛡️ Auditoría Grok")
@@ -144,7 +145,7 @@ if st.button("🚀 Iniciar Ciclo del Súper-Coliseo"):
         st.divider()
 
         # =========================================================
-        # FASE 3: ESPECIALISTAS TRIPLES (Debate Técnico Corto)
+        # FASE 3: ESPECIALISTAS TRIPLES
         # =========================================================
         st.header("📢 Fase 3: Debate de Especialistas (Formato Ejecutivo)")
         col_esp1, col_esp2, col_esp3 = st.columns(3)
