@@ -29,8 +29,8 @@ PROMPT_BASE = (
     "decláralo explícitamente. Debes citar variables específicas del texto para justificar tu análisis.\n\n"
 )
 
-# Función centralizada para consultar OpenRouter
-def consultar_agente(model_id, prompt, key, system_role):
+# Función centralizada para consultar OpenRouter con control de tokens
+def consultar_agente(model_id, prompt, key, system_role, max_tokens=1500):
     headers = {
         "Authorization": f"Bearer {key.strip()}",
         "Content-Type": "application/json",
@@ -43,7 +43,8 @@ def consultar_agente(model_id, prompt, key, system_role):
         "messages": [
             {"role": "system", "content": PROMPT_BASE + system_role},
             {"role": "user", "content": prompt}
-        ]
+        ],
+        "max_tokens": max_tokens # ESTA LÍNEA ARREGLA EL ERROR 402 limiting the collateral required
     }
     
     try:
@@ -69,17 +70,17 @@ if st.button("🚀 Ejecutar Consenso Multilateral"):
         st.warning("⚠️ El campo de datos está vacío.")
     else:
         
-        # MODELO ELEGIDO PARA EL PROCESO (Claude 3.5 Sonnet por su precisión clínica para seguir reglas estrictas)
-        MODELO_CORE = "anthropic/claude-opus-4.7-fast"
+        # MODELO ELEGIDO PARA EL PROCESO
+        MODELO_CORE = "anthropic/claude-3.5-sonnet"
         # MODELO DE RAZONAMIENTO PARA EL TRIBUNAL
-        MODELO_JUEZ = "openai/o1-pro"
+        MODELO_JUEZ = "openai/o1-mini"
 
         # ---------------------------------------------------------
         # AGENTE 1: NORMALIZADOR
         # ---------------------------------------------------------
         with st.spinner("1. Agente Normalizador estructurando datos..."):
             role_1 = "Tu función es estructurar datos de entrada en un formato claro o JSON estandarizado. Extrae líneas, alineaciones, clima y estadio. No analices, solo organiza."
-            datos_estructurados = consultar_agente(MODELO_CORE, datos_brutos, api_key, role_1)
+            datos_estructurados = consultar_agente(MODELO_CORE, datos_brutos, api_key, role_1, max_tokens=1000)
             
             with st.expander("✅ Datos Estandarizados (Agente Normalizador)", expanded=True):
                 st.code(datos_estructurados)
@@ -94,15 +95,15 @@ if st.button("🚀 Ejecutar Consenso Multilateral"):
             
             # Agente 2: Oddsmaker
             role_2 = "Tu función es analizar movimientos de líneas, cuotas y calcular la probabilidad implícita. Detecta desbalances de valor."
-            res_oddsmaker = consultar_agente(MODELO_CORE, datos_estructurados, api_key, role_2)
+            res_oddsmaker = consultar_agente(MODELO_CORE, datos_estructurados, api_key, role_2, max_tokens=1200)
             
             # Agente 3: Scout
             role_3 = "Tu función es evaluar el matchup deportivo puro, impacto de alineaciones, efecto de lesiones e índice de fuerza."
-            res_scout = consultar_agente(MODELO_CORE, datos_estructurados, api_key, role_3)
+            res_scout = consultar_agente(MODELO_CORE, datos_estructurados, api_key, role_3, max_tokens=1200)
             
             # Agente 4: Contexto
             role_4 = "Tu función es evaluar factores exógenos: impacto del clima, condiciones del estadio, fatiga y descanso reportado."
-            res_contexto = consultar_agente(MODELO_CORE, datos_estructurados, api_key, role_4)
+            res_contexto = consultar_agente(MODELO_CORE, datos_estructurados, api_key, role_4, max_tokens=1200)
 
             with col1:
                 st.markdown("### 📊 2. Agente Oddsmaker")
@@ -138,7 +139,7 @@ if st.button("🚀 Ejecutar Consenso Multilateral"):
                 "Juez Agresivo: busca cuotas altas con valor esperado positivo; Juez Estadístico: se apega a las probabilidades frías). "
                 "Presenta el debate resumido de los tres jueces basándote en los reportes previos."
             )
-            votos_tribunal = consultar_agente(MODELO_JUEZ, debate_acumulado, api_key, role_tribunal)
+            votos_tribunal = consultar_agente(MODELO_JUEZ, debate_acumulado, api_key, role_tribunal, max_tokens=1500)
             
             # Agente Final: Veredicto
             role_final = (
@@ -150,7 +151,7 @@ if st.button("🚀 Ejecutar Consenso Multilateral"):
                 "- **Riesgos Principales**"
             )
             input_veredicto = f"{debate_acumulado}\n\nDEBATE DEL TRIBUNAL:\n{votos_tribunal}"
-            veredicto_final = consultar_agente(MODELO_CORE, input_veredicto, api_key, role_final)
+            veredicto_final = consultar_agente(MODELO_CORE, input_veredicto, api_key, role_final, max_tokens=1500)
 
             with col_jueces:
                 st.markdown("### ⚖️ Deliberación del Tribunal (o1-mini)")
