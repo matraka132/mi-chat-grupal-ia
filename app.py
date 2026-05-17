@@ -22,24 +22,24 @@ Busca las líneas donde definimos los modelos y cámbialas por estas, que son lo
 Busca estas líneas:
 
 Python
-res_gpt = consultar_ia("openai/gpt-4o", pregunta, api_key)
+res_gpt = consultar_ia("openai/gpt-4o-mini", pregunta, api_key)
 res_gemini = consultar_ia("google/gemini-pro-1.5", pregunta, api_key)
 res_grok = consultar_ia("x-ai/grok-3", pregunta, api_key)
 Y cámbiolas exactamente por estas:
 
 Python
-res_gpt = consultar_ia("openai/gpt-4o", pregunta, api_key)
-res_gemini = consultar_ia("google/gemini-flash-1.5", pregunta, api_key) # Cambiado a Flash para asegurar compatibilidad
-res_grok = consultar_ia("x-ai/grok-3", pregunta, api_key)
+res_gpt = consultar_ia("openai/gpt-4o-mini", pregunta, api_key)
+res_gemini = consultar_ia("google/gemini-2.5-flash-lite", pregunta, api_key) # Cambiado a Flash para asegurar compatibilidad
+res_grok = consultar_ia("x-ai/grok-4.20", pregunta, api_key)
 Y no olvides cambiar también el de la Fase 2 (el Consenso):
 Busca abajo donde dice:
 
 Python
-res_final = consultar_ia("google/gemini-pro-1.5", prompt_final, api_key)
+res_final = consultar_ia("google/gemini-2.5-flash-lite", prompt_final, api_key)
 Y cámbialo por:
 
 Python
-res_final = consultar_ia("google/gemini-flash-1.5", prompt_final, api_key)
+res_final = consultar_ia("google/gemini-2.5-flash-lite", prompt_final, api_key)
 ¿Por qué pasó esto?
 OpenRouter es como un directorio. Si le pides por "Gemini-Pro-1.5" y ellos lo tienen guardado como "Gemini-1.5-Pro", te dirá que el "endpoint" (el destino) no existe. He puesto la versión Gemini 1.5 Flash porque es rapidísima y casi nunca falla en las conexiones.
 
