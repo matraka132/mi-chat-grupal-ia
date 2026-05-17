@@ -20,13 +20,15 @@ with st.sidebar:
     4. **Tribunal Interno y Veredicto** (DeepSeek R1 y GPT-4o)
     """)
 
-# PROMPT BASE CRÍTICO
+# PROMPT BASE CRÍTICO CON REGLA DE NO LINKS
 PROMPT_BASE = (
     "Eres un agente en un ambiente cerrado. Prohibido usar conocimiento previo que no esté en el texto de entrada "
-    "o en los datos web recuperados por el investigador. Si falta información crucial, decláralo explícitamente.\n\n"
+    "o en los datos web recuperados por el investigador. Si falta información crucial, decláralo explícitamente.\n"
+    "CRÍTICO: Está estrictamente prohibido generar enlaces, hipervínculos o URLs (como enlaces de Google Maps o OpenAI). "
+    "Entrega tu análisis únicamente en texto plano estructurado con Markdown estándar.\n\n"
 )
 
-# Función centralizada para consultar OpenRouter
+# Función centralizada para consultar OpenRouter con filtro de salida
 def consultar_agente(model_id, prompt, key, system_role, max_tokens=1500):
     headers = {
         "Authorization": f"Bearer {key.strip()}",
@@ -53,7 +55,14 @@ def consultar_agente(model_id, prompt, key, system_role, max_tokens=1500):
         )
         if response.status_code != 200:
             return f"❌ Error {response.status_code}: {response.text}"
-        return response.json()["choices"][0]["message"]["content"]
+            
+        texto_salida = response.json()["choices"][0]["message"]["content"]
+        
+        # Filtro de seguridad por si la IA ignora la instrucción y mete links de mapas
+        if "(https://www.google.com/maps" in texto_salida:
+            texto_salida = texto_salida.split("(https://www.google.com/maps")[0] + "\n\n*[Nota: Enlace de mapa truncado por seguridad del script]*"
+            
+        return texto_salida
     except Exception as e:
         return f"❌ Error de conexión: {str(e)}"
 
@@ -68,9 +77,9 @@ if st.button("🚀 Iniciar Búsqueda y Consenso"):
     else:
         
         # Modelos bandera estables
-        MODELO_CORE = "openai/gpt-4o-mini-search-preview"
+        MODELO_CORE = "openai/gpt-4o-mini"
         MODELO_WEB = "perplexity/sonar"
-        MODELO_JUEZ = "deepseek/deepseek-v4-flash"
+        MODELO_JUEZ = "deepseek/deepseek-v4-pro"
 
         # ---------------------------------------------------------
         # PASO 1: AGENTE INVESTIGADOR (Búsqueda Web en Tiempo Real)
@@ -80,7 +89,7 @@ if st.button("🚀 Iniciar Búsqueda y Consenso"):
                 "Eres un Investigador Deportivo Avanzado con acceso a internet. Tu objetivo es tomar las líneas de apuesta "
                 "provistas por el usuario, identificar qué equipos juegan hoy domingo 17 de mayo de 2026, y buscar en la web: "
                 "1) Lanzadores abridores confirmados. 2) Clima exacto a la hora del juego y condiciones del estadio. "
-                "3) Reporte de lesiones o bajas de última hora para ambos equipos. Entrega un reporte limpio y detailed."
+                "3) Reporte de lesiones o bajas de última hora para ambos equipos. Entrega un reporte limpio y detallado sin incluir URLs."
             )
             reporte_web = consultar_agente(MODELO_WEB, lineas_hardrock, api_key, role_web, max_tokens=2000)
             
@@ -95,7 +104,7 @@ if st.button("🚀 Iniciar Búsqueda y Consenso"):
                 "Eres el Auditor y Filtro de Seguridad. Tu trabajo es analizar el reporte web traído por el investigador "
                 "y cruzarlo con las líneas de Hard Rock Bet provistas por el usuario. "
                 "Verifica que los lanzadores realmente correspondan a los equipos, que el clima sea lógico para la ubicación del estadio "
-                "y que no haya contradicciones o datos inventados. Genera un JSON o lista estandarizada limpia y 100% VERIFICADA."
+                "y que no haya contradicciones o datos inventados. Genera una lista estandarizada limpia y 100% VERIFICADA. No incluyas enlaces."
             )
             prompt_auditoria = f"LÍNEAS DEL USUARIO:\n{lineas_hardrock}\n\nREPORTE WEB A AUDITAR:\n{reporte_web}"
             datos_verificados = consultar_agente(MODELO_CORE, prompt_auditoria, api_key, role_auditor, max_tokens=1500)
@@ -112,15 +121,15 @@ if st.button("🚀 Iniciar Búsqueda y Consenso"):
         with st.spinner("Especialistas evaluando el escenario auditado..."):
             
             # Agente Oddsmaker
-            role_2 = "Tu función es analizar movimientos de líneas, cuotas y calcular la probabilidad implícita basándote SOLO en los datos auditados."
+            role_2 = "Tu función es analizar movimientos de líneas, cuotas y calcular la probabilidad implícita basándote SOLO en los datos auditados. No generes enlaces."
             res_oddsmaker = consultar_agente(MODELO_CORE, datos_verificados, api_key, role_2, max_tokens=1200)
             
             # Agente Scout
-            role_3 = "Tu función es evaluar el matchup deportivo puro, impacto de alineaciones y efecto de lesiones basándote SOLO en los datos auditados."
+            role_3 = "Tu función es evaluar el matchup deportivo puro, impacto de alineaciones y efecto de lesiones basándote SOLO en los datos auditados. No generes enlaces."
             res_scout = consultar_agente(MODELO_CORE, datos_verificados, api_key, role_3, max_tokens=1200)
             
             # Agente Contexto
-            role_4 = "Tu función es evaluar factores exógenos: impacto del clima, condiciones del estadio, fatiga y descanso basándote SOLO en los datos auditados."
+            role_4 = "Tu función es evaluar factores exógenos: impacto del clima, condiciones del estadio, fatiga y descanso basándote SOLO en los datos auditados. No generes enlaces."
             res_contexto = consultar_agente(MODELO_CORE, datos_verificados, api_key, role_4, max_tokens=1200)
 
             with col1:
@@ -153,13 +162,13 @@ if st.button("🚀 Iniciar Búsqueda y Consenso"):
             
             role_tribunal = (
                 "Actúa como un Tribunal de 3 Jueces Internos (Juez Conservador, Juez Agresivo y Juez Estadístico). "
-                "Presenta el debate resumido de los tres jueces analizando los riesgos y el valor esperado basándote en los reportes previos."
+                "Presenta el debate resumido de los tres jueces analizando los riesgos y el valor esperado basándote en los reportes previos. No pongas enlaces."
             )
             votos_tribunal = consultar_agente(MODELO_JUEZ, debate_acumulado, api_key, role_tribunal, max_tokens=1500)
             
             role_final = (
                 "Eres el Agente Final de Veredicto. Consolida los análisis previos y el debate del tribunal. "
-                "Entrega obligatoriamente este formato:\n"
+                "Entrega obligatoriamente este formato sin incluir links externos:\n"
                 "- **Pick Oficial** (Bet / Lean / Pass)\n"
                 "- **Grado de Confianza** (Alto / Medio / Bajo)\n"
                 "- **Justificación Clave**\n"
