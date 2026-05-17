@@ -3,9 +3,9 @@ import requests
 import json
 
 # 1. Configuración de la interfaz
-st.set_page_config(page_title="Consenso Automatizado", layout="wide")
-st.title("🏛️ Consenso Deportivo v4: Multi-IA (Grok + Gemini + Claude)")
-st.markdown("Automatización total: **Grok** investiga la web, **Gemini** audita y analiza como especialista, y **Claude** dicta el veredicto final.")
+st.set_page_config(page_title="Súper-Consenso Triple", layout="wide")
+st.title("🏛️ El Súper-Coliseo: Flujo de Co-Auditoría Triple")
+st.markdown("Fase 1: Investigación Triple | Fase 2: Co-Auditoría | Fase 3: Especialistas Triples | Fase 4: Veredicto de Claude")
 
 # Barra lateral para la API Key
 with st.sidebar:
@@ -13,28 +13,27 @@ with st.sidebar:
     api_key = st.text_input("Introduce tu API Key de OpenRouter:", type="password")
     st.write("---")
     st.markdown("""
-    ### ⚙️ Asignación de Inteligencias:
-    * 🔍 **Investigador:** `Grok 2 Search` (x-AI)
-    * 🛡️ **Auditor:** `Gemini 2.5 Pro` (Google)
-    * 📋 **Especialistas:** `Gemini 2.5 Pro` (Google)
-    * ⚖️ **Tribunal y Dictamen:** `Claude 3.5 Sonnet` (Anthropic)
+    ### 🧠 Motores del Sistema:
+    * 🔍 **Grok 2 Search** (`x-ai/grok-2-search`)
+    * 🔵 **Gemini 2.5 Pro** (`google/gemini-2.5-pro`)
+    * 🟠 **Claude 3.5 Sonnet** (`anthropic/claude-3.5-sonnet`)
     """)
 
-# PROMPT BASE CRÍTICO
+# PROMPT BASE CRÍTICO DE AMBIENTE CERRADO
 PROMPT_BASE = (
-    "Eres un agente analítico avanzado en un entorno cerrado. Prohibido usar conocimiento previo que no esté "
-    "explícitamente en el texto de entrada o en los datos web recuperados en esta sesión.\n"
-    "CRÍTICO: Está estrictamente prohibido generar enlaces, URLs o hipervínculos de cualquier tipo. "
-    "Entrega tu respuesta utilizando únicamente texto plano estructurado con viñetas y Markdown estándar.\n\n"
+    "Eres un agente analítico de élite en un entorno hiper-seguro y cerrado. Prohibido usar conocimientos o "
+    "suposiciones externas fuera de los datos provistos en el prompt actual o el reporte de búsqueda web de esta sesión.\n"
+    "CRÍTICO: Está estrictamente prohibido generar enlaces, URLs o hipervínculos de ningún tipo. "
+    "Entrega tus respuestas en texto plano limpio estructurado con Markdown estándar.\n\n"
 )
 
-# Función centralizada para consultar OpenRouter
-def consultar_agente(model_id, prompt, key, system_role, max_tokens=1500):
+# Función centralizada de consulta
+def consultar_ia(model_id, prompt, key, system_role, max_tokens=1500):
     headers = {
         "Authorization": f"Bearer {key.strip()}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://streamlit.app",
-        "X-Title": "Consenso Deportivo Multi-IA"
+        "X-Title": "Súper-Coliseo Triple"
     }
     
     payload = {
@@ -54,137 +53,142 @@ def consultar_agente(model_id, prompt, key, system_role, max_tokens=1500):
             timeout=90
         )
         if response.status_code != 200:
-            return f"❌ Error en {model_id} ({response.status_code}): {response.text}"
+            return f"❌ Error en {model_id}: {response.text}"
             
-        texto_salida = response.json()["choices"][0]["message"]["content"]
+        texto = response.json()["choices"][0]["message"]["content"]
         
-        # Cortafuegos para enlaces residuales de mapas
-        if "http" in texto_salida.lower():
-            for word in texto_salida.split():
+        # Filtro de seguridad para remover URLs residuales
+        if "http" in texto.lower():
+            for word in texto.split():
                 if "http" in word.lower():
-                    texto_salida = texto_salida.replace(word, "[Dato Limpiado]")
-                    
-        return texto_salida
+                    texto = texto.replace(word, "[Dato Sanitizado]")
+        return texto
     except Exception as e:
-        return f"❌ Error de conexión: {str(e)}"
+        return f"❌ Error de conexión en {model_id}: {str(e)}"
 
-# Entrada de datos en bruto
-lineas_hardrock = st.text_area("📋 Pega SOLO las líneas de Hard Rock Bet aquí:", height=150, placeholder="Ej:\nOrioles\nNationals\n-1.5 (+125)\nO 10.5 (-120)")
+# Entrada de datos de Hard Rock Bet
+lineas_raw = st.text_area("📋 Pega las líneas de Hard Rock Bet aquí:", height=150, placeholder="Ej:\nOrioles\nNationals\n-1.5 (+125)")
 
-if st.button("🚀 Iniciar Procesamiento Multi-IA"):
+if st.button("🚀 Iniciar Ciclo del Súper-Coliseo"):
     if not api_key:
-        st.error("⚠️ Por favor, introduce tu API Key en la barra lateral.")
-    elif not lineas_hardrock:
-        st.warning("⚠️ Pega las líneas del partido para comenzar.")
+        st.error("⚠️ Falta la API Key en la barra lateral.")
+    elif not lineas_raw:
+        st.warning("⚠️ Pega la información de las líneas primero.")
     else:
         
-        # DIRECTORIO DE MODELOS SOLICITADOS
-        MODELO_INVESTIGADOR = "x-ai/grok-4.3"     # Grok con acceso a Web
-        MODELO_ANALISTA = "google/gemini-2.5-flash-lite-preview-09-2025"     # Gemini para análisis masivo y lógica estructurada
-        MODELO_VEREDICTO = "anthropic/claude-3.5-haiku" # Claude para el cierre maestro y pick definitivo
+        # Identificadores Oficiales de Modelos
+        GROK = "x-ai/grok-4.3"
+        GEMINI = "google/gemini-2.5-pro"
+        CLAUDE = "anthropic/claude-3-haiku"
 
-        # ---------------------------------------------------------
-        # PASO 1: INVESTIGACIÓN CON GROKK (Búsqueda Web Activa)
-        # ---------------------------------------------------------
-        with st.spinner("🔍 1. Grok rastreando la web en tiempo real (Abridores, Clima, Bajas)..."):
-            role_web = (
-                "Eres el Investigador Deportivo de Élite de Grok. Tu objetivo es tomar las líneas del usuario, "
-                "identificar el partido de hoy y realizar una búsqueda exhaustiva en internet. "
-                "Consigue: 1) Lanzadores abridores confirmados/probables. 2) Clima exacto, velocidad del viento y tipo de estadio. "
-                "3) Reporte actualizado de lesionados de última hora. Entrega un reporte crudo, detallado y libre de enlaces."
-            )
-            reporte_web = consultar_agente(MODELO_INVESTIGADOR, lineas_hardrock, api_key, role_web, max_tokens=2000)
-            
-            with st.expander("🌐 Datos Web Recuperados por Grok", expanded=True):
-                st.write(reporte_web)
-
-        # ---------------------------------------------------------
-        # PASO 2: AUDITORÍA CON GEMINI (Blindaje de datos)
-        # ---------------------------------------------------------
-        with st.spinner("🛡️ 2. Gemini ejecutando auditoría y control de calidad..."):
-            role_auditor = (
-                "Eres el Auditor de Datos de Gemini. Tu función es cruzar la información web conseguida por Grok "
-                "con las líneas de apuesta pegadas por el usuario. Verifica minuciosamente que los nombres correspondan, "
-                "que los equipos pertenezcan a la jornada correcta y filtra cualquier dato incoherente o contradictorio. "
-                "Entrega una base de datos unificada, limpia y certificada al 100%."
-            )
-            prompt_auditoria = f"LÍNEAS HARDROCK:\n{lineas_hardrock}\n\nDATA ENCONTRADA POR GROK:\n{reporte_web}"
-            datos_verificados = consultar_agente(MODELO_ANALISTA, prompt_auditoria, api_key, role_auditor, max_tokens=1500)
-            
-            with st.expander("✅ Base de Datos Certificada por Gemini", expanded=True):
-                st.code(datos_verificados)
-
-        # ---------------------------------------------------------
-        # PASO 3: ESPECIALISTAS EN PARALELO CON GEMINI
-        # ---------------------------------------------------------
-        st.subheader("📢 Análisis Especializado (Gemini 2.5 Pro)")
-        col1, col2, col3 = st.columns(3)
+        # =========================================================
+        # FASE 1: INVESTIGACIÓN TRIPLE (Grok -> Gemini -> Claude)
+        # =========================================================
+        st.header("🔍 Fase 1: Investigación y Rastreo Triple")
+        col_inv1, col_inv2, col_inv3 = st.columns(3)
         
-        with st.spinner("Especialistas de Gemini desglosando las variables..."):
+        with st.spinner("Las tres mentes investigan y recopilan datos de la web..."):
             
-            # Oddsmaker
-            role_odd = "Eres el Oddsmaker de Gemini. Analiza movimientos de líneas, valor en los momios y probabilidad implícita basándote SOLO en la data certificada."
-            res_oddsmaker = consultar_agente(MODELO_ANALISTA, datos_verificados, api_key, role_odd, max_tokens=1200)
+            role_inv = "Tu rol es buscar y compilar: 1) Lanzadores confirmados. 2) Clima y viento del estadio. 3) Reporte de bajas de último minuto para este partido."
             
-            # Scout
-            role_sco = "Eres el Scout Deportivo de Gemini. Analiza los duelos directos (Matchups), poder al bate, bullpens y el impacto exacto de las bajas basándote SOLO en la data certificada."
-            res_scout = consultar_agente(MODELO_ANALISTA, datos_verificados, api_key, role_sco, max_tokens=1200)
+            res_grok_inv = consultar_ia(GROK, lineas_raw, api_key, f"Eres Grok-Web. {role_inv}", max_tokens=1200)
+            res_gemini_inv = consultar_ia(GEMINI, f"Líneas: {lineas_raw}\nDatos auxiliares web: {res_grok_inv}", api_key, f"Eres Gemini-Search. {role_inv}", max_tokens=1200)
+            res_claude_inv = consultar_ia(CLAUDE, f"Líneas: {lineas_raw}\nDatos previos: {res_gemini_inv}", api_key, f"Eres Claude-Scout. {role_inv}", max_tokens=1200)
             
-            # Contexto
-            role_ctx = "Eres el Experto de Contexto de Gemini. Evalúa factores externos como dirección del viento, temperatura, humedad, viajes recientes y fatiga basándote SOLO en la data certificada."
-            res_contexto = consultar_agente(MODELO_ANALISTA, datos_verificados, api_key, role_ctx, max_tokens=1200)
+            with col_inv1:
+                st.markdown("### ⚫ Investigación Grok 2")
+                st.info(res_grok_inv)
+            with col_inv2:
+                st.markdown("### 🔵 Investigación Gemini")
+                st.info(res_gemini_inv)
+            with col_inv3:
+                st.markdown("### 自由 Investigación Claude 3.5")
+                st.info(res_claude_inv)
 
-            with col1:
-                st.markdown("### 📊 Mercado e Implícitas")
+        st.divider()
+
+        # =========================================================
+        # FASE 2: AUDITORÍA TRIPLE CRUZADA (Filtro Anti-Errores)
+        # =========================================================
+        st.header("🛡️ Fase 2: Co-Auditoría Cruzada (Filtro de Seguridad)")
+        col_aud1, col_aud2, col_aud3 = st.columns(3)
+        
+        prompt_auditoria = f"""
+        LÍNEAS INICIALES: {lineas_raw}
+        REPORTE GROK: {res_grok_inv}
+        REPORTE GEMINI: {res_gemini_inv}
+        REPORTE CLAUDE: {res_claude_inv}
+        """
+        
+        with st.spinner("Cruzando datos entre sí para eliminar contradicciones o alucinaciones..."):
+            
+            role_aud = "Analiza los tres reportes de investigación previos. Encuentra contradicciones en abridores, clima o líneas. Entrega una base de datos depurada, unificada y corregida."
+            
+            aud_grok = consultar_ia(GROK, prompt_auditoria, api_key, f"Eres el Auditor de Grok. {role_aud}", max_tokens=1000)
+            aud_gemini = consultar_ia(GEMINI, f"{prompt_auditoria}\nCrítica Grok: {aud_grok}", api_key, f"Eres el Auditor de Gemini. {role_aud}", max_tokens=1000)
+            aud_claude = consultar_ia(CLAUDE, f"{prompt_auditoria}\nFiltros previos: {aud_gemini}", api_key, f"Eres el Auditor Jefe de Claude. {role_aud}", max_tokens=1200)
+            
+            with col_aud1:
+                st.markdown("### 🛡️ Auditoría Grok")
+                st.write(aud_grok)
+            with col_aud2:
+                st.markdown("### 🛡️ Auditoría Gemini")
+                st.write(aud_gemini)
+            with col_aud3:
+                st.markdown("### 🛡️ Certificación Claude")
+                st.code(aud_claude) # Claude entrega la base final limpia
+
+        st.divider()
+
+        # =========================================================
+        # FASE 3: ESPECIALISTAS TRIPLES (Debate Matemático y Deportivo)
+        # =========================================================
+        st.header("📢 Fase 3: Debate de Especialistas")
+        col_esp1, col_esp2, col_esp3 = st.columns(3)
+        
+        with st.spinner("Grok, Gemini y Claude asumen sus roles de analistas..."):
+            
+            res_oddsmaker = consultar_ia(GROK, aud_claude, api_key, "Eres el Especialista Oddsmaker (Grok). Analiza movimientos de líneas, trampas en las cuotas y probabilidad implícita.", max_tokens=1200)
+            res_scout = consultar_ia(GEMINI, aud_claude, api_key, "Eres el Especialista Scout (Gemini). Analiza duelos directos bateador-lanzador, estado de los bullpens y peso de las lesiones.", max_tokens=1200)
+            res_contexto = consultar_ia(CLAUDE, aud_claude, api_key, "Eres el Especialista de Contexto (Claude). Evalúa el impacto exacto del aire, temperatura, fatiga por viajes y tendencias históricas.", max_tokens=1200)
+            
+            with col_esp1:
+                st.markdown("### 📊 Grok (Mercado e Implícitas)")
                 st.info(res_oddsmaker)
-            with col2:
-                st.markdown("### ⚾ Matchup y Rotación")
+            with col_esp2:
+                st.markdown("### ⚾ Gemini (Matchup y Rotación)")
                 st.info(res_scout)
-            with col3:
-                st.markdown("### 🌤️ Clima y Factores Externos")
+            with col_esp3:
+                st.markdown("### 🌤️ Claude (Entorno y Tendencias)")
                 st.info(res_contexto)
 
         st.divider()
 
-        # ---------------------------------------------------------
-        # PASO 4: TRIBUNAL Y VEREDICTO FINAL CON CLAUDE
-        # ---------------------------------------------------------
-        st.subheader("🏛️ Sentencia y Dictamen Final (Claude 3.5 Sonnet)")
+        # =========================================================
+        # FASE 4: JURADO Y VEREDICTO FINAL (Claude 3.5 Sonnet)
+        # =========================================================
+        st.subheader("🏆 Fase 4: Dictamen Supremo del Jurado (Claude 3.5 Sonnet)")
         
-        debate_acumulado = f"""
-        DATA CERTIFICADA: {datos_verificados}
-        ANÁLISIS ODDMAKER: {res_oddsmaker}
-        ANÁLISIS SCOUT: {res_scout}
-        ANÁLISIS CONTEXTO: {res_contexto}
+        bloque_final = f"""
+        DATA CERTIFICADA Y AUDITADA: {aud_claude}
+        INFORME MERCADO (Grok): {res_oddsmaker}
+        INFORME SCOUT (Gemini): {res_scout}
+        INFORME CONTEXTO (Claude): {res_contexto}
         """
-
-        col_jueces, col_veredicto = st.columns([1, 1])
-
-        with st.spinner("Claude evaluando consensos y definiendo la jugada de mayor valor esperado..."):
+        
+        with st.spinner("Claude evalúa el debate completo de los especialistas y dicta sentencia..."):
             
-            role_tribunal = (
-                "Actúas como el Tribunal Arbitral de Claude. Analiza los tres informes de Gemini. "
-                "Establece los puntos de acuerdo, los puntos de conflicto entre mercado y deporte, y evalúa el nivel de riesgo teórico."
-            )
-            votos_tribunal = consultar_agente(MODELO_VEREDICTO, debate_acumulado, api_key, role_tribunal, max_tokens=1500)
-            
-            role_final = (
-                "Eres el Juez Supremo de Dictamen de Claude. Tu palabra es ley. Consolida los argumentos previos y emite "
-                "el veredicto final con máxima precisión analítica. Es obligatorio responder estrictamente con esta estructura:\n\n"
-                "- **Pick Oficial Definitivo:** [Escribe aquí el Bet / Lean / Pass]\n"
+            role_jurado = (
+                "Eres el Jurado Final y Juez Supremo de Claude. Tu palabra es la ley del sistema. "
+                "Recopila los tres informes de los especialistas, detecta dónde está el valor matemático esperado (+EV) "
+                "y entrega el veredicto definitivo. Responde estrictamente con esta estructura:\n\n"
+                "- **Pick Oficial Definitivo:** [Escribe aquí el Bet / Lean / Pass y la línea exacta]\n"
                 "- **Grado de Confianza:** [Alto / Medio / Bajo]\n"
-                "- **Ventaja Matemática Detectada:** [Argumento principal de valor]\n"
-                "- **Umbral de Riesgo:** [Qué factor podría arruinar la jugada]"
+                "- **Ventaja Matemática Detectada:** [Tu justificación basada solo en la data previa]\n"
+                "- **Protocolo de Riesgo:** [Qué factor o imprevisto específico del juego destruye el pick]"
             )
-            input_veredicto = f"{debate_acumulado}\n\nDEBATE DEL TRIBUNAL CLAUDE:\n{votos_tribunal}"
-            veredicto_final = consultar_agente(MODELO_VEREDICTO, input_veredicto, api_key, role_final, max_tokens=1500)
-
-            with col_jueces:
-                st.markdown("### ⚖️ Deliberación del Tribunal Arbitral")
-                st.write(votos_tribunal)
-                
-            with col_veredicto:
-                st.markdown("### 🏆 Veredicto Maestro de Claude")
-                st.success(veredicto_final)
-                
-        st.balloons()
+            
+            veredicto_maestro = consultar_agente=consultar_ia(CLAUDE, bloque_final, api_key, role_jurado, max_tokens=1500)
+            
+            st.success(veredicto_maestro)
+            st.balloons()
