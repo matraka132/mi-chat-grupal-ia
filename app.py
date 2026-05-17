@@ -2,38 +2,46 @@ import streamlit as st
 import requests
 import json
 
-# 1. Configuración de pantalla ancha
-st.set_page_config(page_title="Coliseo de Expertos AI", layout="wide")
-st.title("🏛️ El Coliseo: Consenso de 10 Agentes de IA")
-st.markdown("Flujo avanzado de Propuesta, Debate de Especialistas y Veredicto Final Decantado.")
+# 1. Configuración de la interfaz
+st.set_page_config(page_title="Consenso Deportivo Cerrado", layout="wide")
+st.title("🏛️ Sistema de Consenso Deportivo de 5 Agentes")
+st.markdown("Basado estrictamente en datos de entrada del usuario | Ambiente Cerrado")
 
-# 2. Barra lateral para la API Key
+# Barra lateral para la API Key
 with st.sidebar:
-    st.header("🔑 Acceso")
+    st.header("🔑 Configuración")
     api_key = st.text_input("Introduce tu API Key de OpenRouter:", type="password")
     st.write("---")
     st.markdown("""
-    ### 🧠 Roles del Panel:
-    * **Razonamiento:** OpenAI o1/o3, Claude 3.5 Sonnet
-    * **Técnicos:** DeepSeek Coder, Codestral
-    * **Open-Source:** Llama 3, Mixtral 8x22B
-    * **Datos/Búsqueda:** Perplexity Sonar, Cohere Command R+
-    * **Contexto/Tendencias:** Gemini 1.5 Pro, Grok 3
+    ### 🛡️ Flujo Secuencial:
+    1. **Agente Normalizador** (Estructura JSON)
+    2. **Agente Oddsmaker** (Mercado y Cuotas)
+    3. **Agente Scout** (Matchup y Lesiones)
+    4. **Agente de Contexto** (Clima y Estadio)
+    5. **Tribunal de Consenso** (Juez Con, Agr, Est)
+    6. **Veredicto Final** (Pick Oficial)
     """)
 
-# 3. Función optimizada para conectar con OpenRouter
-def consultar_ia(model_id, prompt, key, system_prompt="Eres un analista experto."):
+# PROMPT BASE CRÍTICO (Tu regla de oro)
+PROMPT_BASE = (
+    "Eres un agente en un ambiente cerrado. Prohibido usar conocimiento externo. "
+    "Tu única fuente de verdad son los datos proporcionados en el texto. Si falta información, "
+    "decláralo explícitamente. Debes citar variables específicas del texto para justificar tu análisis.\n\n"
+)
+
+# Función centralizada para consultar OpenRouter
+def consultar_agente(model_id, prompt, key, system_role):
     headers = {
         "Authorization": f"Bearer {key.strip()}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://streamlit.app",
-        "X-Title": "Coliseo de Expertos AI"
+        "X-Title": "Consenso Deportivo Cerrado"
     }
     
     payload = {
         "model": model_id,
         "messages": [
-            {"role": "system", "content": system_prompt},
+            {"role": "system", "content": PROMPT_BASE + system_role},
             {"role": "user", "content": prompt}
         ]
     }
@@ -43,7 +51,7 @@ def consultar_ia(model_id, prompt, key, system_prompt="Eres un analista experto.
             "https://openrouter.ai/api/v1/chat/completions",
             headers=headers,
             data=json.dumps(payload),
-            timeout=90 # Tiempo extendido para modelos de razonamiento profundo
+            timeout=60
         )
         if response.status_code != 200:
             return f"❌ Error {response.status_code}: {response.text}"
@@ -51,113 +59,105 @@ def consultar_ia(model_id, prompt, key, system_prompt="Eres un analista experto.
     except Exception as e:
         return f"❌ Error de conexión: {str(e)}"
 
-# 4. Entrada de datos del usuario
-pregunta = st.text_area("✍️ Introduce los datos, partidos o cuotas a analizar:", placeholder="Ej: Datos de abridores, líneas de Hard Rock Bet, estadísticas recientes...")
+# Entrada de datos en bruto
+datos_brutos = st.text_area("📋 Pega las líneas de Hard Rock Bet, Clima, Lanzadores y Lesiones aquí:", height=200, placeholder="Ej: Orioles vs Nationals, líneas, abridores, clima...")
 
-if st.button("🚀 Iniciar Proceso de Consenso"):
+if st.button("🚀 Ejecutar Consenso Multilateral"):
     if not api_key:
-        st.error("⚠️ Falta la API Key en la barra lateral.")
-    elif not pregunta:
-        st.warning("⚠️ Escribe la consulta o pega la información deportiva.")
+        st.error("⚠️ Por favor, introduce tu API Key en la barra lateral.")
+    elif not datos_brutos:
+        st.warning("⚠️ El campo de datos está vacío.")
     else:
         
-        # ==========================================
-        # FASE 1: PROPUESTA E INVESTIGACIÓN DE HECHOS
-        # ==========================================
-        st.header("📋 Fase 1: Investigación de Hechos e Hipótesis")
-        
-        # Aquí elegimos a los especialistas en traer datos frescos y balanceados
+        # MODELO ELEGIDO PARA EL PROCESO (Claude 3.5 Sonnet por su precisión clínica para seguir reglas estrictas)
+        MODELO_CORE = "anthropic/claude-3.5-sonnet"
+        # MODELO DE RAZONAMIENTO PARA EL TRIBUNAL
+        MODELO_JUEZ = "openai/o1-mini"
+
+        # ---------------------------------------------------------
+        # AGENTE 1: NORMALIZADOR
+        # ---------------------------------------------------------
+        with st.spinner("1. Agente Normalizador estructurando datos..."):
+            role_1 = "Tu función es estructurar datos de entrada en un formato claro o JSON estandarizado. Extrae líneas, alineaciones, clima y estadio. No analices, solo organiza."
+            datos_estructurados = consultar_agente(MODELO_CORE, datos_brutos, api_key, role_1)
+            
+            with st.expander("✅ Datos Estandarizados (Agente Normalizador)", expanded=True):
+                st.code(datos_estructurados)
+
+        # ---------------------------------------------------------
+        # AGENTES 2, 3 Y 4: ANÁLISIS EN PARALELO
+        # ---------------------------------------------------------
+        st.subheader("📢 Análisis de los Especialistas (Ambiente Cerrado)")
         col1, col2, col3 = st.columns(3)
         
-        with st.spinner('Perplexity investiga la web, Cohere y Llama analizan...'):
-            # Usamos IDs estándar y compatibles de OpenRouter
-            res_perplexity = consultar_ia("perplexity/sonar-pro-search", pregunta, api_key, "Eres el Fact-Checker. Trae datos reales, climas, estadios o lesiones de última hora.")
-            res_cohere = consultar_ia("cohere/command-a", pregunta, api_key, "Eres el Administrador de Datos. Cruza las estadísticas frías sin inventar nada.")
-            res_llama = consultar_ia("meta-llama/llama-3-70b-instruct", pregunta, api_key, "Eres el Generalista Rápido. Da una perspectiva estadística directa.")
+        with st.spinner("Especialistas analizando los datos normalizados..."):
+            
+            # Agente 2: Oddsmaker
+            role_2 = "Tu función es analizar movimientos de líneas, cuotas y calcular la probabilidad implícita. Detecta desbalances de valor."
+            res_oddsmaker = consultar_agente(MODELO_CORE, datos_estructurados, api_key, role_2)
+            
+            # Agente 3: Scout
+            role_3 = "Tu función es evaluar el matchup deportivo puro, impacto de alineaciones, efecto de lesiones e índice de fuerza."
+            res_scout = consultar_agente(MODELO_CORE, datos_estructurados, api_key, role_3)
+            
+            # Agente 4: Contexto
+            role_4 = "Tu función es evaluar factores exógenos: impacto del clima, condiciones del estadio, fatiga y descanso reportado."
+            res_contexto = consultar_agente(MODELO_CORE, datos_estructurados, api_key, role_4)
 
             with col1:
-                st.markdown("### 🔍 Perplexity (Fact-Checking)")
-                st.info(res_perplexity)
+                st.markdown("### 📊 2. Agente Oddsmaker")
+                st.info(res_oddsmaker)
             with col2:
-                st.markdown("### 📊 Cohere Command R+")
-                st.info(res_cohere)
+                st.markdown("### ⚾ 3. Agente Scout")
+                st.info(res_scout)
             with col3:
-                st.markdown("### 🦙 Llama 3 (Perspectiva)")
-                st.info(res_llama)
+                st.markdown("### 🌤️ 4. Agente de Contexto")
+                st.info(res_contexto)
 
         st.divider()
 
-        # ==========================================
-        # FASE 2: DEBATE TÉCNICO Y CRÍTICA CRUZADA
-        # ==========================================
-        st.header("💻 Fase 2: Filtro Técnico y Tendencias (Debate)")
+        # ---------------------------------------------------------
+        # FASE 5: TRIBUNAL DE CONSENSO Y VEREDICTO FINAL
+        # ---------------------------------------------------------
+        st.subheader("🏛️ 5. Tribunal de Consenso y Dictamen")
         
-        # Pasamos la información recolectada en la Fase 1 a los matemáticos y analistas de tendencias
-        prompt_debate = f"""
-        PREGUNTA ORIGINAL DEL USUARIO: {pregunta}
-        
-        DATOS RECOLECTADOS POR TUS COMPAÑEROS:
-        - Reporte Web (Perplexity): {res_perplexity}
-        - Análisis Estadístico (Cohere): {res_cohere}
-        
-        Tu tarea: Analiza estos datos. Si eres DeepSeek/Codestral, busca fallos matemáticos o de lógica en las probabilidades. Si eres Grok/Mixtral/Gemini, evalúa tendencias de última hora y el comportamiento de las líneas. Ofrece tu crítica.
+        debate_acumulado = f"""
+        DATOS REALES DEL PARTIDO: {datos_estructurados}
+        ANÁLISIS MERCADO (Oddsmaker): {res_oddsmaker}
+        ANÁLISIS DEPORTIVO (Scout): {res_scout}
+        ANÁLISIS ENTORNO (Contexto): {res_contexto}
         """
-        
-        col4, col5, col6, col7 = st.columns(4)
-        
-        with st.spinner('Los matemáticos y analistas debaten las probabilidades...'):
-            res_deepseek = consultar_ia("deepseek/deepseek-chat", prompt_debate, api_key, "Eres DeepSeek Coder. Tu fuerte es la lógica matemática pura y el cálculo de probabilidades.")
-            res_codestral = consultar_ia("mistralai/codestral-2508", prompt_debate, api_key, "Eres el Auditor Eficiente. Encuentra contradicciones numéricas entre los reportes.")
-            res_grok = consultar_ia("x-ai/grok-4.3", prompt_debate, api_key, "Eres Grok 3. Analiza las tendencias de última hora y el movimiento de líneas coloquiales.")
-            res_gemini = consultar_ia("~google/gemini-pro-latest", prompt_debate, api_key, "Eres Gemini. Procesa todo el contexto masivo de las respuestas previas.")
 
-            with col4:
-                st.markdown("### 📐 DeepSeek (Matemático)")
-                st.write(res_deepseek)
-            with col5:
-                st.markdown("### 🧮 Codestral (Auditor)")
-                st.write(res_codestral)
-            with col6:
-                st.markdown("### ⚫ Grok 3 (Tendencias)")
-                st.write(res_grok)
-            with col7:
-                st.markdown("### 🔵 Gemini 1.5 Pro (Contexto)")
-                st.write(res_gemini)
+        col_jueces, col_veredicto = st.columns([1, 1])
 
-        st.divider()
-
-        # ==========================================
-        # FASE 3: EL VEREDICTO DE LOS PESOS PESADOS
-        # ==========================================
-        st.header("🏆 Fase 3: Veredicto de los Pesos Pesados")
-        
-        # Recolectamos absolutamente TODO el hilo de la conversación
-        debate_completo = f"""
-        PREGUNTA DEL USUARIO: {pregunta}
-        
-        FASE 1 (Hechos):
-        Perplexity: {res_perplexity}
-        Cohere: {res_cohere}
-        
-        FASE 2 (Debate Probabilidades):
-        DeepSeek: {res_deepseek}
-        Grok 3: {res_grok}
-        Gemini: {res_gemini}
-        """
-        
-        col_juez1, col_juez2 = st.columns(2)
-        
-        with st.spinner('Los Jueces Finales (Modelos de Razonamiento) están dictaminando...'):
-            # OpenAI o1/o3 o Claude 3.5 Sonnet actúan como el tribunal supremo
-            res_openai_o = consultar_ia("openai/o4-mini-deep-research", debate_completo, api_key, "Eres el Pensador Profundo de OpenAI. Tu fortaleza es la lógica estricta. Dictamina el pick con mayor valor real.")
-            res_claude = consultar_ia("anthropic/claude-3.5-haiku", debate_completo, api_key, "Eres el Analista Clínico de Anthropic. Revisa los argumentos de todos, elimina contradicciones y redacta la conclusión definitiva de forma estructurada.")
+        with st.spinner("Tribunal deliberando y Agente Final decantando..."):
             
-            with col_juez1:
-                st.markdown("### 🧠 OpenAI o1-mini (Lógica Pura)")
-                st.success(res_openai_o)
-            with col_juez2:
-                st.markdown("### 🟠 Claude 3.5 Sonnet (Editor Jefe)")
-                st.success(res_claude)
+            # Simulación del Tribunal Interno (Juez Conservador, Agresivo y Estadístico votando)
+            role_tribunal = (
+                "Actúa como un Tribunal de 3 Jueces Internos (Juez Conservador: busca la menor exposición al riesgo; "
+                "Juez Agresivo: busca cuotas altas con valor esperado positivo; Juez Estadístico: se apega a las probabilidades frías). "
+                "Presenta el debate resumido de los tres jueces basándote en los reportes previos."
+            )
+            votos_tribunal = consultar_agente(MODELO_JUEZ, debate_acumulado, api_key, role_tribunal)
+            
+            # Agente Final: Veredicto
+            role_final = (
+                "Eres el Agente Final de Veredicto. Tu función es consolidar absolutamente todos los análisis previos. "
+                "Debes entregar de forma obligatoria el siguiente formato:\n"
+                "- **Pick Oficial** (Bet / Lean / Pass)\n"
+                "- **Grado de Confianza** (Alto / Medio / Bajo)\n"
+                "- **Justificación Clave** (Basada solo en los datos proporcionados)\n"
+                "- **Riesgos Principales**"
+            )
+            input_veredicto = f"{debate_acumulado}\n\nDEBATE DEL TRIBUNAL:\n{votos_tribunal}"
+            veredicto_final = consultar_agente(MODELO_CORE, input_veredicto, api_key, role_final)
+
+            with col_jueces:
+                st.markdown("### ⚖️ Deliberación del Tribunal (o1-mini)")
+                st.write(votos_tribunal)
                 
-        # Consenso definitivo unificado
+            with col_veredicto:
+                st.markdown("### 🏆 Veredicto Final Decantado")
+                st.success(veredicto_final)
+                
         st.balloons()
