@@ -140,7 +140,7 @@ if st.button("🚀 Iniciar Ciclo del Súper-Coliseo"):
 
         st.divider()
 
-        # =========================================================
+      # =========================================================
         # FASE 3: ESPECIALISTAS TRIPLES (Debate Matemático y Deportivo)
         # =========================================================
         st.header("📢 Fase 3: Debate de Especialistas")
@@ -148,9 +148,14 @@ if st.button("🚀 Iniciar Ciclo del Súper-Coliseo"):
         
         with st.spinner("Grok, Gemini y Claude asumen sus roles de analistas..."):
             
-            res_oddsmaker = consultar_ia(GROK, aud_claude, api_key, "Eres el Especialista Oddsmaker (Grok). Analiza movimientos de líneas, trampas en las cuotas y probabilidad implícita.", max_tokens=1200)
-            res_scout = consultar_ia(GEMINI, aud_claude, api_key, "Eres el Especialista Scout (Gemini). Analiza duelos directos bateador-lanzador, estado de los bullpens y peso de las lesiones.", max_tokens=1200)
-            res_contexto = consultar_ia(CLAUDE, aud_claude, api_key, "Eres el Especialista de Contexto (Claude). Evalúa el impacto exacto del aire, temperatura, fatiga por viajes y tendencias históricas.", max_tokens=1200)
+            role_odd = "Eres el Especialista Oddsmaker (Grok). Sé directo. Analiza movimientos de líneas y valor en los momios en un máximo de 3 párrafos. Prohibido introducciones o saludos."
+            res_oddsmaker = consultar_ia(GROK, aud_claude, api_key, role_odd, max_tokens=1200)
+            
+            role_sco = "Eres el Scout (Gemini). ¡Directo al grano! Analiza el duelo abridor-bateador y bullpens en viñetas cortas. Prohibido escribir encabezados como 'ID de Agente', 'Autorización', 'Entendido' o textos de relleno. Inicia directo con la data."
+            res_scout = consultar_ia(GEMINI, aud_claude, api_key, role_sco, max_tokens=1200)
+            
+            role_ctx = "Eres el Especialista de Contexto (Claude). Analiza clima, fatiga y estadio de forma ejecutiva y compacta. Sin introducciones."
+            res_contexto = consultar_ia(CLAUDE, aud_claude, api_key, role_ctx, max_tokens=1200)
             
             with col_esp1:
                 st.markdown("### 📊 Grok (Mercado e Implícitas)")
@@ -188,7 +193,7 @@ if st.button("🚀 Iniciar Ciclo del Súper-Coliseo"):
                 "- **Protocolo de Riesgo:** [Qué factor o imprevisto específico del juego destruye el pick]"
             )
             
-            veredicto_maestro = consultar_agente=consultar_ia(CLAUDE, bloque_final, api_key, role_jurado, max_tokens=1500)
+            veredicto_maestro = consultar_ia(CLAUDE, bloque_final, api_key, role_jurado, max_tokens=1500)
             
             st.success(veredicto_maestro)
             st.balloons()
