@@ -14,7 +14,7 @@ with st.sidebar:
     st.write("---")
     st.markdown("""
     ### 🧠 Motores del Sistema:
-    * 🔍 **Grok 2 Search** (`x-ai/grok-2-search`)
+    * 🔍 **Grok 2 Search** (`x-ai/grok-4.20`)
     * 🔵 **Gemini 2.5 Pro** (`google/gemini-2.5-pro`)
     * 🟠 **Claude 3.5 Sonnet** (`anthropic/claude-3.5-sonnet`)
     """)
