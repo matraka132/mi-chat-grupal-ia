@@ -70,9 +70,9 @@ if st.button("🚀 Ejecutar Consenso Multilateral"):
     else:
         
         # MODELO ELEGIDO PARA EL PROCESO (Claude 3.5 Sonnet por su precisión clínica para seguir reglas estrictas)
-        MODELO_CORE = "anthropic/claude-3.5-sonnet"
+        MODELO_CORE = "anthropic/claude-opus-4.7-fast"
         # MODELO DE RAZONAMIENTO PARA EL TRIBUNAL
-        MODELO_JUEZ = "openai/o1-mini"
+        MODELO_JUEZ = "openai/o1-pro"
 
         # ---------------------------------------------------------
         # AGENTE 1: NORMALIZADOR
