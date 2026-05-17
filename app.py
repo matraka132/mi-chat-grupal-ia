@@ -4,8 +4,8 @@ import json
 
 # 1. Configuración de la interfaz
 st.set_page_config(page_title="Consenso Automatizado", layout="wide")
-st.title("🏛️ Consenso Deportivo v3: Búsqueda y Auditoría Automática")
-st.markdown("Pega solo las líneas de Hard Rock Bet. El sistema buscará el clima, abridores y lesiones, y los auditará antes del debate.")
+st.title("🏛️ Consenso Deportivo v4: Multi-IA (Grok + Gemini + Claude)")
+st.markdown("Automatización total: **Grok** investiga la web, **Gemini** audita y analiza como especialista, y **Claude** dicta el veredicto final.")
 
 # Barra lateral para la API Key
 with st.sidebar:
@@ -13,28 +13,28 @@ with st.sidebar:
     api_key = st.text_input("Introduce tu API Key de OpenRouter:", type="password")
     st.write("---")
     st.markdown("""
-    ### 🔄 Flujo de Automatización:
-    1. **Agente Investigador** (Busca clima, abridores y bajas en la Web)
-    2. **Agente Auditor** (Cruza y rectifica datos para evitar alucinaciones)
-    3. **Especialistas en Paralelo** (Oddsmaker, Scout, Contexto)
-    4. **Tribunal Interno y Veredicto** (DeepSeek R1 y GPT-4o)
+    ### ⚙️ Asignación de Inteligencias:
+    * 🔍 **Investigador:** `Grok 2 Search` (x-AI)
+    * 🛡️ **Auditor:** `Gemini 2.5 Pro` (Google)
+    * 📋 **Especialistas:** `Gemini 2.5 Pro` (Google)
+    * ⚖️ **Tribunal y Dictamen:** `Claude 3.5 Sonnet` (Anthropic)
     """)
 
-# PROMPT BASE CRÍTICO CON REGLA DE NO LINKS
+# PROMPT BASE CRÍTICO
 PROMPT_BASE = (
-    "Eres un agente en un ambiente cerrado. Prohibido usar conocimiento previo que no esté en el texto de entrada "
-    "o en los datos web recuperados por el investigador. Si falta información crucial, decláralo explícitamente.\n"
-    "CRÍTICO: Está estrictamente prohibido generar enlaces, hipervínculos o URLs (como enlaces de Google Maps o OpenAI). "
-    "Entrega tu análisis únicamente en texto plano estructurado con Markdown estándar.\n\n"
+    "Eres un agente analítico avanzado en un entorno cerrado. Prohibido usar conocimiento previo que no esté "
+    "explícitamente en el texto de entrada o en los datos web recuperados en esta sesión.\n"
+    "CRÍTICO: Está estrictamente prohibido generar enlaces, URLs o hipervínculos de cualquier tipo. "
+    "Entrega tu respuesta utilizando únicamente texto plano estructurado con viñetas y Markdown estándar.\n\n"
 )
 
-# Función centralizada para consultar OpenRouter con filtro de salida
+# Función centralizada para consultar OpenRouter
 def consultar_agente(model_id, prompt, key, system_role, max_tokens=1500):
     headers = {
         "Authorization": f"Bearer {key.strip()}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://streamlit.app",
-        "X-Title": "Consenso Deportivo Automatizado"
+        "X-Title": "Consenso Deportivo Multi-IA"
     }
     
     payload = {
@@ -54,135 +54,137 @@ def consultar_agente(model_id, prompt, key, system_role, max_tokens=1500):
             timeout=90
         )
         if response.status_code != 200:
-            return f"❌ Error {response.status_code}: {response.text}"
+            return f"❌ Error en {model_id} ({response.status_code}): {response.text}"
             
         texto_salida = response.json()["choices"][0]["message"]["content"]
         
-        # Filtro de seguridad por si la IA ignora la instrucción y mete links de mapas
-        if "(https://www.google.com/maps" in texto_salida:
-            texto_salida = texto_salida.split("(https://www.google.com/maps")[0] + "\n\n*[Nota: Enlace de mapa truncado por seguridad del script]*"
-            
+        # Cortafuegos para enlaces residuales de mapas
+        if "http" in texto_salida.lower():
+            for word in texto_salida.split():
+                if "http" in word.lower():
+                    texto_salida = texto_salida.replace(word, "[Dato Limpiado]")
+                    
         return texto_salida
     except Exception as e:
         return f"❌ Error de conexión: {str(e)}"
 
-# Entrada de datos en bruto (Solo las líneas)
-lineas_hardrock = st.text_area("📋 Pega SOLO las líneas de Hard Rock Bet aquí (1 hora antes del juego):", height=150, placeholder="Ej:\nOrioles\nNationals\n-1.5 (+125)\nO 10.5 (-120)")
+# Entrada de datos en bruto
+lineas_hardrock = st.text_area("📋 Pega SOLO las líneas de Hard Rock Bet aquí:", height=150, placeholder="Ej:\nOrioles\nNationals\n-1.5 (+125)\nO 10.5 (-120)")
 
-if st.button("🚀 Iniciar Búsqueda y Consenso"):
+if st.button("🚀 Iniciar Procesamiento Multi-IA"):
     if not api_key:
         st.error("⚠️ Por favor, introduce tu API Key en la barra lateral.")
     elif not lineas_hardrock:
-        st.warning("⚠️ Pega las líneas del partido para poder trabajar.")
+        st.warning("⚠️ Pega las líneas del partido para comenzar.")
     else:
         
-        # Modelos bandera estables
-        MODELO_CORE = "openai/gpt-4o-mini"
-        MODELO_WEB = "perplexity/sonar"
-        MODELO_JUEZ = "deepseek/deepseek-v4-pro"
+        # DIRECTORIO DE MODELOS SOLICITADOS
+        MODELO_INVESTIGADOR = "x-ai/grok-4.3"     # Grok con acceso a Web
+        MODELO_ANALISTA = "google/gemini-2.5-flash-lite-preview-09-2025"     # Gemini para análisis masivo y lógica estructurada
+        MODELO_VEREDICTO = "anthropic/claude-3.5-haiku" # Claude para el cierre maestro y pick definitivo
 
         # ---------------------------------------------------------
-        # PASO 1: AGENTE INVESTIGADOR (Búsqueda Web en Tiempo Real)
+        # PASO 1: INVESTIGACIÓN CON GROKK (Búsqueda Web Activa)
         # ---------------------------------------------------------
-        with st.spinner("🔍 1. Agente Investigador rastreando abridores, clima y lesiones en la web..."):
+        with st.spinner("🔍 1. Grok rastreando la web en tiempo real (Abridores, Clima, Bajas)..."):
             role_web = (
-                "Eres un Investigador Deportivo Avanzado con acceso a internet. Tu objetivo es tomar las líneas de apuesta "
-                "provistas por el usuario, identificar qué equipos juegan hoy domingo 17 de mayo de 2026, y buscar en la web: "
-                "1) Lanzadores abridores confirmados. 2) Clima exacto a la hora del juego y condiciones del estadio. "
-                "3) Reporte de lesiones o bajas de última hora para ambos equipos. Entrega un reporte limpio y detallado sin incluir URLs."
+                "Eres el Investigador Deportivo de Élite de Grok. Tu objetivo es tomar las líneas del usuario, "
+                "identificar el partido de hoy y realizar una búsqueda exhaustiva en internet. "
+                "Consigue: 1) Lanzadores abridores confirmados/probables. 2) Clima exacto, velocidad del viento y tipo de estadio. "
+                "3) Reporte actualizado de lesionados de última hora. Entrega un reporte crudo, detallado y libre de enlaces."
             )
-            reporte_web = consultar_agente(MODELO_WEB, lineas_hardrock, api_key, role_web, max_tokens=2000)
+            reporte_web = consultar_agente(MODELO_INVESTIGADOR, lineas_hardrock, api_key, role_web, max_tokens=2000)
             
-            with st.expander("🌐 Reporte Encontrado en la Web (Perplexity)", expanded=True):
+            with st.expander("🌐 Datos Web Recuperados por Grok", expanded=True):
                 st.write(reporte_web)
 
         # ---------------------------------------------------------
-        # PASO 2: AGENTE AUDITOR (Rectificación de Datos)
+        # PASO 2: AUDITORÍA CON GEMINI (Blindaje de datos)
         # ---------------------------------------------------------
-        with st.spinner("🛡️ 2. Agente Auditor rectificando y blindando los datos..."):
+        with st.spinner("🛡️ 2. Gemini ejecutando auditoría y control de calidad..."):
             role_auditor = (
-                "Eres el Auditor y Filtro de Seguridad. Tu trabajo es analizar el reporte web traído por el investigador "
-                "y cruzarlo con las líneas de Hard Rock Bet provistas por el usuario. "
-                "Verifica que los lanzadores realmente correspondan a los equipos, que el clima sea lógico para la ubicación del estadio "
-                "y que no haya contradicciones o datos inventados. Genera una lista estandarizada limpia y 100% VERIFICADA. No incluyas enlaces."
+                "Eres el Auditor de Datos de Gemini. Tu función es cruzar la información web conseguida por Grok "
+                "con las líneas de apuesta pegadas por el usuario. Verifica minuciosamente que los nombres correspondan, "
+                "que los equipos pertenezcan a la jornada correcta y filtra cualquier dato incoherente o contradictorio. "
+                "Entrega una base de datos unificada, limpia y certificada al 100%."
             )
-            prompt_auditoria = f"LÍNEAS DEL USUARIO:\n{lineas_hardrock}\n\nREPORTE WEB A AUDITAR:\n{reporte_web}"
-            datos_verificados = consultar_agente(MODELO_CORE, prompt_auditoria, api_key, role_auditor, max_tokens=1500)
+            prompt_auditoria = f"LÍNEAS HARDROCK:\n{lineas_hardrock}\n\nDATA ENCONTRADA POR GROK:\n{reporte_web}"
+            datos_verificados = consultar_agente(MODELO_ANALISTA, prompt_auditoria, api_key, role_auditor, max_tokens=1500)
             
-            with st.expander("✅ Datos Finales Auditados y Rectificados", expanded=True):
+            with st.expander("✅ Base de Datos Certificada por Gemini", expanded=True):
                 st.code(datos_verificados)
 
         # ---------------------------------------------------------
-        # PASO 3: DEBATE DE ESPECIALISTAS (Ambiente Cerrado sobre datos auditados)
+        # PASO 3: ESPECIALISTAS EN PARALELO CON GEMINI
         # ---------------------------------------------------------
-        st.subheader("📢 Análisis de los Especialistas")
+        st.subheader("📢 Análisis Especializado (Gemini 2.5 Pro)")
         col1, col2, col3 = st.columns(3)
         
-        with st.spinner("Especialistas evaluando el escenario auditado..."):
+        with st.spinner("Especialistas de Gemini desglosando las variables..."):
             
-            # Agente Oddsmaker
-            role_2 = "Tu función es analizar movimientos de líneas, cuotas y calcular la probabilidad implícita basándote SOLO en los datos auditados. No generes enlaces."
-            res_oddsmaker = consultar_agente(MODELO_CORE, datos_verificados, api_key, role_2, max_tokens=1200)
+            # Oddsmaker
+            role_odd = "Eres el Oddsmaker de Gemini. Analiza movimientos de líneas, valor en los momios y probabilidad implícita basándote SOLO en la data certificada."
+            res_oddsmaker = consultar_agente(MODELO_ANALISTA, datos_verificados, api_key, role_odd, max_tokens=1200)
             
-            # Agente Scout
-            role_3 = "Tu función es evaluar el matchup deportivo puro, impacto de alineaciones y efecto de lesiones basándote SOLO en los datos auditados. No generes enlaces."
-            res_scout = consultar_agente(MODELO_CORE, datos_verificados, api_key, role_3, max_tokens=1200)
+            # Scout
+            role_sco = "Eres el Scout Deportivo de Gemini. Analiza los duelos directos (Matchups), poder al bate, bullpens y el impacto exacto de las bajas basándote SOLO en la data certificada."
+            res_scout = consultar_agente(MODELO_ANALISTA, datos_verificados, api_key, role_sco, max_tokens=1200)
             
-            # Agente Contexto
-            role_4 = "Tu función es evaluar factores exógenos: impacto del clima, condiciones del estadio, fatiga y descanso basándote SOLO en los datos auditados. No generes enlaces."
-            res_contexto = consultar_agente(MODELO_CORE, datos_verificados, api_key, role_4, max_tokens=1200)
+            # Contexto
+            role_ctx = "Eres el Experto de Contexto de Gemini. Evalúa factores externos como dirección del viento, temperatura, humedad, viajes recientes y fatiga basándote SOLO en la data certificada."
+            res_contexto = consultar_agente(MODELO_ANALISTA, datos_verificados, api_key, role_ctx, max_tokens=1200)
 
             with col1:
-                st.markdown("### 📊 Agente Oddsmaker")
+                st.markdown("### 📊 Mercado e Implícitas")
                 st.info(res_oddsmaker)
             with col2:
-                st.markdown("### ⚾ Agente Scout")
+                st.markdown("### ⚾ Matchup y Rotación")
                 st.info(res_scout)
             with col3:
-                st.markdown("### 🌤️ Agente de Contexto")
+                st.markdown("### 🌤️ Clima y Factores Externos")
                 st.info(res_contexto)
 
         st.divider()
 
         # ---------------------------------------------------------
-        # PASO 4: TRIBUNAL DE CONSENSO Y DICTAMEN FINAL
+        # PASO 4: TRIBUNAL Y VEREDICTO FINAL CON CLAUDE
         # ---------------------------------------------------------
-        st.subheader("🏛️ Tribunal de Consenso y Dictamen")
+        st.subheader("🏛️ Sentencia y Dictamen Final (Claude 3.5 Sonnet)")
         
         debate_acumulado = f"""
-        DATOS AUDITADOS: {datos_verificados}
-        ANÁLISIS MERCADO: {res_oddsmaker}
-        ANÁLISIS DEPORTIVO: {res_scout}
-        ANÁLISIS ENTORNO: {res_contexto}
+        DATA CERTIFICADA: {datos_verificados}
+        ANÁLISIS ODDMAKER: {res_oddsmaker}
+        ANÁLISIS SCOUT: {res_scout}
+        ANÁLISIS CONTEXTO: {res_contexto}
         """
 
         col_jueces, col_veredicto = st.columns([1, 1])
 
-        with st.spinner("Tribunal deliberando y emitiendo Pick Oficial..."):
+        with st.spinner("Claude evaluando consensos y definiendo la jugada de mayor valor esperado..."):
             
             role_tribunal = (
-                "Actúa como un Tribunal de 3 Jueces Internos (Juez Conservador, Juez Agresivo y Juez Estadístico). "
-                "Presenta el debate resumido de los tres jueces analizando los riesgos y el valor esperado basándote en los reportes previos. No pongas enlaces."
+                "Actúas como el Tribunal Arbitral de Claude. Analiza los tres informes de Gemini. "
+                "Establece los puntos de acuerdo, los puntos de conflicto entre mercado y deporte, y evalúa el nivel de riesgo teórico."
             )
-            votos_tribunal = consultar_agente(MODELO_JUEZ, debate_acumulado, api_key, role_tribunal, max_tokens=1500)
+            votos_tribunal = consultar_agente(MODELO_VEREDICTO, debate_acumulado, api_key, role_tribunal, max_tokens=1500)
             
             role_final = (
-                "Eres el Agente Final de Veredicto. Consolida los análisis previos y el debate del tribunal. "
-                "Entrega obligatoriamente este formato sin incluir links externos:\n"
-                "- **Pick Oficial** (Bet / Lean / Pass)\n"
-                "- **Grado de Confianza** (Alto / Medio / Bajo)\n"
-                "- **Justificación Clave**\n"
-                "- **Riesgos Principales**"
+                "Eres el Juez Supremo de Dictamen de Claude. Tu palabra es ley. Consolida los argumentos previos y emite "
+                "el veredicto final con máxima precisión analítica. Es obligatorio responder estrictamente con esta estructura:\n\n"
+                "- **Pick Oficial Definitivo:** [Escribe aquí el Bet / Lean / Pass]\n"
+                "- **Grado de Confianza:** [Alto / Medio / Bajo]\n"
+                "- **Ventaja Matemática Detectada:** [Argumento principal de valor]\n"
+                "- **Umbral de Riesgo:** [Qué factor podría arruinar la jugada]"
             )
-            input_veredicto = f"{debate_acumulado}\n\nDEBATE DEL TRIBUNAL:\n{votos_tribunal}"
-            veredicto_final = consultar_agente(MODELO_CORE, input_veredicto, api_key, role_final, max_tokens=1500)
+            input_veredicto = f"{debate_acumulado}\n\nDEBATE DEL TRIBUNAL CLAUDE:\n{votos_tribunal}"
+            veredicto_final = consultar_agente(MODELO_VEREDICTO, input_veredicto, api_key, role_final, max_tokens=1500)
 
             with col_jueces:
-                st.markdown("### ⚖️ Deliberación del Tribunal (DeepSeek R1)")
+                st.markdown("### ⚖️ Deliberación del Tribunal Arbitral")
                 st.write(votos_tribunal)
                 
             with col_veredicto:
-                st.markdown("### 🏆 Veredicto Final Decantado")
+                st.markdown("### 🏆 Veredicto Maestro de Claude")
                 st.success(veredicto_final)
                 
         st.balloons()
