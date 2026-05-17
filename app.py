@@ -5,7 +5,7 @@ import json
 # 1. Configuración de la interfaz
 st.set_page_config(page_title="Súper-Consenso Triple", layout="wide")
 st.title("🏛️ El Súper-Coliseo: Flujo de Co-Auditoría Triple")
-st.markdown("Fase 1: Investigación Triple | Fase 2: Co-Auditoría | Fase 3: Especialistas Triples | Fase 4: Veredicto de Claude")
+st.markdown("Fase 1: Investigación Abierta | Fase 2: Co-Auditoría Cerrada | Fase 3: Especialistas Triples | Fase 4: Veredicto")
 
 # Barra lateral para la API Key
 with st.sidebar:
@@ -19,16 +19,16 @@ with st.sidebar:
     * 🟠 **Claude 3.5 Sonnet** (`anthropic/claude-3.5-sonnet`)
     """)
 
-# PROMPT BASE CRÍTICO DE AMBIENTE CERRADO
-PROMPT_BASE = (
+# PROMPT BASE PARA ENTORNO CERRADO (Para agentes analistas)
+PROMPT_CERRADO = (
     "Eres un agente analítico de élite en un entorno hiper-seguro y cerrado. Prohibido usar conocimientos o "
     "suposiciones externas fuera de los datos provistos en el prompt actual o el reporte de búsqueda web de esta sesión.\n"
     "CRÍTICO: Está estrictamente prohibido generar enlaces, URLs o hipervínculos de ningún tipo. "
     "Entrega tus respuestas en texto plano limpio estructurado con Markdown estándar.\n\n"
 )
 
-# Función centralizada de consulta
-def consultar_ia(model_id, prompt, key, system_role, max_tokens=1500):
+# Función centralizada de consulta modificada
+def consultar_ia(model_id, prompt, key, system_role, max_tokens=1500, ambiente_cerrado=True):
     headers = {
         "Authorization": f"Bearer {key.strip()}",
         "Content-Type": "application/json",
@@ -36,10 +36,13 @@ def consultar_ia(model_id, prompt, key, system_role, max_tokens=1500):
         "X-Title": "Súper-Coliseo Triple"
     }
     
+    # Si es ambiente cerrado usa el escudo, si es Grok investigando lo dejamos libre
+    prompt_sistema = (PROMPT_CERRADO + system_role) if ambiente_cerrado else system_role
+    
     payload = {
         "model": model_id,
         "messages": [
-            {"role": "system", "content": PROMPT_BASE + system_role},
+            {"role": "system", "content": prompt_sistema},
             {"role": "user", "content": prompt}
         ],
         "max_tokens": max_tokens
@@ -79,7 +82,7 @@ if st.button("🚀 Iniciar Ciclo del Súper-Coliseo"):
         # Identificadores Oficiales de Modelos
         GROK = "x-ai/grok-4.3"
         GEMINI = "google/gemini-2.5-pro"
-        CLAUDE = "anthropic/claude-3-haiku"
+        CLAUDE = "anthropic/claude-3.5-haiku"
 
         # =========================================================
         # FASE 1: INVESTIGACIÓN TRIPLE (Grok -> Gemini -> Claude)
@@ -89,14 +92,22 @@ if st.button("🚀 Iniciar Ciclo del Súper-Coliseo"):
         
         with st.spinner("Las tres mentes investigan y recopilan datos de la web..."):
             
-            role_inv = "Tu rol es buscar y compilar: 1) Lanzadores confirmados. 2) Clima y viento del estadio. 3) Reporte de bajas de último minuto para este partido."
+            role_grok_web = (
+                "Eres Grok 2 con acceso completo a internet en tiempo real. Tu única misión es tomar estas líneas de Hard Rock Bet, "
+                "identificar qué partido de MLB es hoy domingo 17 de mayo de 2026 y BUSCAR EN LA WEB: 1) Lanzadores abridores confirmados "
+                "con sus estadísticas básicas de este año. 2) El clima exacto a la hora del juego, velocidad/dirección del viento y tipo de estadio. "
+                "3) Reporte de bajas o lesionados de última hora. No digas que no tienes datos, ¡búscalos en internet ahora mismo!"
+            )
             
-            res_grok_inv = consultar_ia(GROK, lineas_raw, api_key, f"Eres Grok-Web. {role_inv}", max_tokens=1200)
-            res_gemini_inv = consultar_ia(GEMINI, f"Líneas: {lineas_raw}\nDatos auxiliares web: {res_grok_inv}", api_key, f"Eres Gemini-Search. {role_inv}", max_tokens=1200)
-            res_claude_inv = consultar_ia(CLAUDE, f"Líneas: {lineas_raw}\nDatos previos: {res_gemini_inv}", api_key, f"Eres Claude-Scout. {role_inv}", max_tokens=1200)
+            # ambiente_cerrado=False permite que Grok use su buscador sin restricciones
+            res_grok_inv = consultar_ia(GROK, lineas_raw, api_key, role_grok_web, max_tokens=1500, ambiente_cerrado=False)
+            
+            role_inv_resto = "Tu rol es procesar los datos de búsqueda web provistos en el contexto. Organiza: 1) Lanzadores confirmados. 2) Clima y viento del estadio. 3) Reporte de bajas de último minuto."
+            res_gemini_inv = consultar_ia(GEMINI, f"Líneas del usuario: {lineas_raw}\nReporte de búsqueda web de Grok: {res_grok_inv}", api_key, f"Eres Gemini-Search. {role_inv_resto}", max_tokens=1200)
+            res_claude_inv = consultar_ia(CLAUDE, f"Líneas del usuario: {lineas_raw}\nCompilación previa: {res_gemini_inv}", api_key, f"Eres Claude-Scout. {role_inv_resto}", max_tokens=1200)
             
             with col_inv1:
-                st.markdown("### ⚫ Investigación Grok 2")
+                st.markdown("### ⚫ Investigación Grok 2 (Web Abierta)")
                 st.info(res_grok_inv)
             with col_inv2:
                 st.markdown("### 🔵 Investigación Gemini")
@@ -136,11 +147,11 @@ if st.button("🚀 Iniciar Ciclo del Súper-Coliseo"):
                 st.write(aud_gemini)
             with col_aud3:
                 st.markdown("### 🛡️ Certificación Claude")
-                st.code(aud_claude) # Claude entrega la base final limpia
+                st.code(aud_claude)
 
         st.divider()
 
-      # =========================================================
+        # =========================================================
         # FASE 3: ESPECIALISTAS TRIPLES (Debate Matemático y Deportivo)
         # =========================================================
         st.header("📢 Fase 3: Debate de Especialistas")
@@ -188,7 +199,7 @@ if st.button("🚀 Iniciar Ciclo del Súper-Coliseo"):
                 "Recopila los tres informes de los especialistas, detecta dónde está el valor matemático esperado (+EV) "
                 "y entrega el veredicto definitivo. Responde estrictamente con esta estructura:\n\n"
                 "- **Pick Oficial Definitivo:** [Escribe aquí el Bet / Lean / Pass y la línea exacta]\n"
-                "- **Grado de Confianza:** [Alto / Medio / Bajo]\n"
+                "- **Grado de Confianza** [Alto / Medio / Bajo]\n"
                 "- **Ventaja Matemática Detectada:** [Tu justificación basada solo en la data previa]\n"
                 "- **Protocolo de Riesgo:** [Qué factor o imprevisto específico del juego destruye el pick]"
             )
