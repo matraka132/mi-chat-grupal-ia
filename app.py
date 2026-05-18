@@ -88,7 +88,7 @@ if st.button("🚀 Iniciar Proceso de Decantación"):
         # IDENTIFICADORES DE MODELOS ULTRA-ESTABLES
         PERPLEXITY = "perplexity/sonar"
         GPT4O = "openai/gpt-4o"
-        GEMINI = "google/gemini-2.5-pro"
+        GEMINI = "google/gemini-3.1-flash-lite"
         DEEPSEEK = "deepseek/deepseek-v3.2"
         CLAUDE = "anthropic/claude-sonnet-4.5"
 
