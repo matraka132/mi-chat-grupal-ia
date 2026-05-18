@@ -5,7 +5,7 @@ import json
 # 1. Configuración de la interfaz
 st.set_page_config(page_title="Corte Suprema Deportiva", layout="wide")
 st.title("🏛️ El Coliseo: Auditoría Cruzada de 3 Vías")
-st.markdown("Fase 1: Rastreo Web | Fase 2: Auditoría Cruzada Estricta | Fase 3: Consenso y Veredicto Final")
+st.markdown("Fase 1: Rastreo Web Nativo | Fase 2: Auditoría Cruzada Estricta | Fase 3: Consenso y Veredicto Final")
 
 # Barra lateral para la API Key
 with st.sidebar:
@@ -14,7 +14,7 @@ with st.sidebar:
     st.write("---")
     st.markdown("""
     ### 🛡️ Reglas del Sistema:
-    * 🔍 **Rastreo Triple Activo** en la Web.
+    * 🔍 **Rastreo Triple Nativo** (Sin plugins que rompan la API).
     * ⛔ **Cero Auto-Auditoría:** Los datos se cruzan de forma obligatoria.
     * ⚡ **Cero Relleno:** Respuestas directas en telegrama.
     """)
@@ -25,8 +25,8 @@ PROMPT_BASE = (
     "Ve directo al grano utilizando datos crudos y viñetas cortas. Prohibido generar enlaces o URLs.\n\n"
 )
 
-# Función centralizada de consulta
-def consultar_ia(model_id, prompt, key, system_role, max_tokens=1000, es_busqueda=False):
+# Función centralizada de consulta corregida y limpia
+def consultar_ia(model_id, prompt, key, system_role, max_tokens=1000):
     headers = {
         "Authorization": f"Bearer {key.strip()}",
         "Content-Type": "application/json",
@@ -34,19 +34,15 @@ def consultar_ia(model_id, prompt, key, system_role, max_tokens=1000, es_busqued
         "X-Title": "Auditoria Cruzada Deportiva"
     }
     
-    prompt_sistema = system_role if es_busqueda else (PROMPT_BASE + system_role)
-    
+    # Unimos el prompt del sistema básico
     payload = {
         "model": model_id,
         "messages": [
-            {"role": "system", "content": prompt_sistema},
+            {"role": "system", "content": PROMPT_BASE + system_role},
             {"role": "user", "content": prompt}
         ],
         "max_tokens": max_tokens
     }
-    
-    if es_busqueda:
-        payload["provider"] = {"plugins": [{"id": "web_search"}]}
     
     try:
         response = requests.post(
@@ -72,10 +68,10 @@ if st.button("🚀 Ejecutar Sistema de Auditoría Cruzada"):
         st.warning("⚠️ Introduce las líneas del partido.")
     else:
         
-        # Modelos Oficiales Estables
+        # Identificadores de modelos base estables en OpenRouter para evitar fallos
         GROK = "x-ai/grok-4.20"
         GEMINI = "google/gemini-2.5-pro"
-        CLAUDE = "anthropic/claude-sonnet-4"
+        CLAUDE = "anthropic/claude-3.5-haiku"
 
         # =========================================================
         # FASE 1: RASTREO TRIPLE EN INTERNET
@@ -86,13 +82,14 @@ if st.button("🚀 Ejecutar Sistema de Auditoría Cruzada"):
         with st.spinner("Las tres mentes escanean internet en tiempo real..."):
             
             role_rastreo = (
-                "Busca en internet los datos reales para este partido de MLB de HOY domingo 17 de mayo de 2026. "
-                "Entrega estrictamente: Lanzadores (Mano, ERA), Clima/Estadio y Lesiones de último minuto. Formato telegrama, sin enlaces."
+                "Usa tus capacidades nativas de navegación web para buscar los datos reales de MLB para este partido de HOY domingo 17 de mayo de 2026. "
+                "Consigue e informa estrictamente: 1) Lanzadores abridores confirmados (Mano, ERA). 2) Clima/Estadio. 3) Lesiones de último minuto. "
+                "Entrega la información en formato telegrama conciso, sin saludos, sin introducciones y sin enlaces de ningún tipo."
             )
             
-            investigacion_grok = consultar_ia(GROK, lineas_raw, api_key, f"Eres Grok-Web. {role_rastreo}", max_tokens=500, es_busqueda=True)
-            investigacion_gemini = consultar_ia(GEMINI, lineas_raw, api_key, f"Eres Gemini-Web. {role_rastreo}", max_tokens=500, es_busqueda=True)
-            investigacion_claude = consultar_ia(CLAUDE, lineas_raw, api_key, f"Eres Claude-Web. {role_rastreo}", max_tokens=500, es_busqueda=True)
+            investigacion_grok = consultar_ia(GROK, lineas_raw, api_key, f"Eres Grok-Web. {role_rastreo}", max_tokens=500)
+            investigacion_gemini = consultar_ia(GEMINI, lineas_raw, api_key, f"Eres Gemini-Web. {role_rastreo}", max_tokens=500)
+            investigacion_claude = consultar_ia(CLAUDE, lineas_raw, api_key, f"Eres Claude-Web. {role_rastreo}", max_tokens=500)
             
             with col_inv1:
                 st.markdown("### ⚫ Rastreo Grok 2")
