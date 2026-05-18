@@ -116,15 +116,14 @@ if st.button("🚀 Iniciar Proceso de Decantación"):
 
         st.divider()
 
-        # =========================================================
-        # FASE 3: DEBATE DE ESPECIALISTAS (Gemini + DeepSeek)
+     # =========================================================
+        # FASE 3: DEBATE DE ESPECIALISTAS (Gemini + DeepSeek Corregido)
         # =========================================================
         st.header("📢 Fase 3: Debate de Especialistas en Paralelo")
         col_gemini, col_deepseek = st.columns(2)
         
         with st.spinner("Especialistas desglosando variables deportivas y de mercado..."):
             
-            # Gemini procesa la data dura del deporte, tendencias y sabermetría
             role_gemini = (
                 "Eres el Analista Scout de Gemini. Procesa la base de datos certificada. "
                 "Desglosa el duelo directo abridor vs alineación, el estatus y desgaste de los bullpens, y cómo afectan las bajas al terreno de juego. "
@@ -132,13 +131,14 @@ if st.button("🚀 Iniciar Proceso de Decantación"):
             )
             analisis_deportivo = consultar_ia(GEMINI, data_certificada, api_key, role_gemini, max_tokens=400)
             
-            # DeepSeek R1 analiza el mercado de apuestas y las matemáticas de los momios
+            # ELIMINAMOS EL PROMPT CERRADO PARA DEEPSEEK PARA EVITAR EL 'NONE'
             role_deepseek = (
-                "Eres el Oddsmaker de DeepSeek R1. Procesa la base de datos certificada. "
-                "Analiza el movimiento de líneas, calcula la probabilidad implícita de los momios de Hard Rock Bet "
-                "y detecta si hay trampas o valor matemático real (+EV) en las líneas o en el Over/Under. Entrega máximo 3 viñetas directas."
+                "Eres el Oddsmaker de DeepSeek R1. Analiza el movimiento de líneas y calcula la probabilidad implícita "
+                "de los momios de Hard Rock Bet basados en la data provista. Encuentra si hay valor matemático (+EV). "
+                "Muestra tu análisis de forma clara y directa."
             )
-            analisis_mercado = consultar_ia(DEEPSEEK, data_certificada, api_key, role_deepseek, max_tokens=500)
+            # Pasamos un prompt limpio directo para que el modelo R1 pueda razonar sin trabarse
+            analisis_mercado = consultar_ia(DEEPSEEK, data_certificada, api_key, role_deepseek, max_tokens=700)
             
             with col_gemini:
                 st.markdown("### 🔵 Gemini: Análisis Deportivo y Sabermetría")
@@ -162,7 +162,7 @@ if st.button("🚀 Iniciar Proceso de Decantación"):
         
         with st.spinner("Claude pesando los informes y decantando la mejor jugada..."):
             role_juezo = (
-                "Eres el Juez Supremo de Claude 3.5 Sonnet. Recibes la data limpia, el análisis deportivo y el análisis de mercado. "
+                "Eres el Juez Supremo de Claude 3.5 Sonnet. Recibes la data limpia, el análisis deportivo y el análisis de mercado de DeepSeek. "
                 "Tu objetivo es decantar todo este flujo, encontrar el punto de máximo valor esperado (+EV) y dictaminar la jugada. "
                 "Responde con rigurosidad estadística utilizando estrictamente esta estructura directa:\n\n"
                 "- **Pick Oficial:** [Línea exacta de Hard Rock Bet y acción]\n"
