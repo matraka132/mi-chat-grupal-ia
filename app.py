@@ -70,7 +70,7 @@ if st.button("🚀 Ejecutar Sistema de Auditoría Cruzada"):
         
         # Identificadores de modelos base estables en OpenRouter para evitar fallos
         GROK = "x-ai/grok-4.20"
-        GEMINI = "google/gemini-3.1-pro-preview"
+        GEMINI = "google/gemini-3.1-flash-lite"
         CLAUDE = "anthropic/claude-sonnet-4.5"
 
         # =========================================================
