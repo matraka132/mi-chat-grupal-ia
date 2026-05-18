@@ -14,21 +14,21 @@ with st.sidebar:
     st.write("---")
     st.markdown("""
     ### 🧠 Roles Especializados:
-    1. 🔍 **Perplexity Sonar:** El Investigador Web (Completa clima, viento, estatus).
-    2. 🛡️ **GPT-4o:** El Auditor (Limpia, unifica y elimina contradicciones).
-    3. 🔵 **Gemini 2.5 Pro:** El Scout Deportivo (Matchup puro y sabermetría).
-    4. 🧠 **DeepSeek R1:** El Oddsmaker (Lógica matemática y trampas de mercado).
+    1. 🔍 **Perplexity Sonar:** El Investigador Web.
+    2. 🛡️ **GPT-4o:** El Auditor (Limpia y unifica).
+    3. 🔵 **Gemini 2.5 Pro:** El Scout Deportivo (Sabermetría).
+    4. 🧠 **DeepSeek R1:** El Oddsmaker (Pensamiento matemático libre).
     5. 🟠 **Claude 3.5 Sonnet:** El Juez Supremo (Veredicto y Pick +EV).
     """)
 
 # PROMPT BASE ULTRA-COMPRESO PARA AGENTES INTERMEDIOS
-PROMPT_BASE = (
+PROMPT_CERRADO = (
     "Actúa como un micro-agente analítico de entorno cerrado. Prohibido usar saludos, introducciones o texto de relleno. "
     "Ve directo al grano utilizando datos crudos y viñetas cortas. Prohibido generar enlaces o URLs.\n\n"
 )
 
-# Función centralizada de consulta
-def consultar_ia(model_id, prompt, key, system_role, max_tokens=1000, es_busqueda=False):
+# Función centralizada de consulta modificada con bypass para DeepSeek
+def consultar_ia(model_id, prompt, key, system_role, max_tokens=1000, es_busqueda=False, es_deepseek=False):
     headers = {
         "Authorization": f"Bearer {key.strip()}",
         "Content-Type": "application/json",
@@ -36,8 +36,11 @@ def consultar_ia(model_id, prompt, key, system_role, max_tokens=1000, es_busqued
         "X-Title": "Decantacion 5-IA Deportiva"
     }
     
-    # Perplexity no lleva bozal de entorno cerrado para poder buscar libre en la web
-    prompt_sistema = system_role if es_busqueda else (PROMPT_BASE + system_role)
+    # Si es Perplexity (búsqueda) o DeepSeek R1 (razonamiento), quitamos el bozal estricto
+    if es_busqueda or es_deepseek:
+        prompt_sistema = system_role
+    else:
+        prompt_sistema = PROMPT_CERRADO + system_role
     
     payload = {
         "model": model_id,
@@ -58,14 +61,22 @@ def consultar_ia(model_id, prompt, key, system_role, max_tokens=1000, es_busqued
         if response.status_code != 200:
             return f"❌ Error en {model_id}: {response.text}"
             
-        return response.json()["choices"][0]["message"]["content"]
+        data = response.json()
+        
+        if "choices" in data:
+            return data["choices"][0]["message"]["content"]
+        elif "error" in data:
+            return f"❌ Error devuelto por la API: {data['error']['message']}"
+        else:
+            return f"❌ Respuesta inesperada del servidor: {json.dumps(data)}"
+            
     except Exception as e:
         return f"❌ Error de conexión en {model_id}: {str(e)}"
 
-# Entrada de datos unificada (Líneas + Notas del usuario)
+# Entrada de datos unificada
 st.subheader("📋 Entrada de Datos del Juego")
 lineas_raw = st.text_area("Pega las líneas de Hard Rock Bet aquí:", height=100, placeholder="Ej:\nYankees\nMets\n-1.5 (+165)")
-datos_usuario = st.text_area("Agrega datos importantes que ya conozcas (Pitcher, bajas, viento, etc.) o déjalo en blanco para que la IA investigue:", height=100, placeholder="Ej: Viento soplando fuerte hacia el jardín central. El bullpen de Mets viene cansado.")
+datos_usuario = st.text_area("Agrega datos importantes que ya conozcas (Opcional):", height=100, placeholder="Ej: Bullpen de Mets cansado.")
 
 if st.button("🚀 Iniciar Proceso de Decantación"):
     if not api_key:
@@ -74,14 +85,13 @@ if st.button("🚀 Iniciar Proceso de Decantación"):
         st.warning("⚠️ Introduce al menos las líneas básicas del partido.")
     else:
         
-        # DIRECTORIO DE LAS 5 MEJORES IAS PARA LA TAREA
+        # IDENTIFICADORES DE MODELOS ULTRA-ESTABLES
         PERPLEXITY = "perplexity/sonar"
         GPT4O = "openai/gpt-4o"
         GEMINI = "google/gemini-3.1-pro-preview"
         DEEPSEEK = "deepseek/deepseek-v4-pro"
         CLAUDE = "anthropic/claude-sonnet-4.5"
 
-        # Paquete de entrada inicial
         input_inicial = f"LÍNEAS HARD ROCK:\n{lineas_raw}\n\nDATOS EXTRA DEL USUARIO:\n{datos_usuario}"
 
         # =========================================================
@@ -90,10 +100,10 @@ if st.button("🚀 Iniciar Proceso de Decantación"):
         st.header("🔍 Fase 1: Enriquecimiento e Investigación Web")
         with st.spinner("Perplexity rastreando y completando datos en tiempo real..."):
             role_perp = (
-                "Eres el Investigador de Perplexity. Tu misión es tomar los datos provistos para este juego de MLB de HOY domingo 17 de mayo de 2026 y buscar en internet: "
-                "1) Lanzadores abridores confirmados con su mano (L/R) y estadísticas actualizadas. "
-                "2) Clima exacto a la hora del juego, velocidad/dirección del viento y si el estadio es abierto o cerrado. "
-                "3) Reporte de bajas o lesionados de última hora de ambos equipos. Responde solo con la data cruda, sin enlaces."
+                "Eres el Investigador de Perplexity. Tu misión es buscar en internet para este juego de MLB de HOY: "
+                "1) Lanzadores abridores confirmados (L/R) y estadísticas actuales. "
+                "2) Clima del partido, velocidad/dirección del viento y si el estadio es abierto o cerrado. "
+                "3) Reporte de bajas o lesionados de última hora. Responde solo con la data cruda, sin enlaces."
             )
             reporte_web = consultar_ia(PERPLEXITY, input_inicial, api_key, role_perp, max_tokens=600, es_busqueda=True)
             st.info(reporte_web)
@@ -107,38 +117,36 @@ if st.button("🚀 Iniciar Proceso de Decantación"):
         with st.spinner("GPT-4o unificando y limpiando la base de datos..."):
             prompt_auditoria = f"INPUT USUARIO:\n{input_inicial}\n\nDATA ENCONTRADA EN WEB:\n{reporte_web}"
             role_gpt = (
-                "Eres el Auditor de Datos de GPT-4o. Tu trabajo es limpiar el texto recibido. Cruza las líneas de apuesta con la data de internet. "
-                "Elimina contradicciones, saludos, comentarios insustanciales y genera una única lista unificada, limpia y certificada "
-                "en formato telegrama. Esta será la única fuente de verdad para el resto de las IAs."
+                "Eres el Auditor de Datos de GPT-4o. Limpia el texto recibido. Cruza las líneas con la data de internet. "
+                "Elimina contradicciones, comentarios insustanciales y genera una lista unificada en formato telegrama."
             )
             data_certificada = consultar_ia(GPT4O, prompt_auditoria, api_key, role_gpt, max_tokens=600)
             st.code(data_certificada)
 
         st.divider()
 
-     # =========================================================
-        # FASE 3: DEBATE DE ESPECIALISTAS (Gemini + DeepSeek Corregido)
+        # =========================================================
+        # FASE 3: DEBATE DE ESPECIALISTAS (Gemini + DeepSeek Libre)
         # =========================================================
         st.header("📢 Fase 3: Debate de Especialistas en Paralelo")
         col_gemini, col_deepseek = st.columns(2)
         
         with st.spinner("Especialistas desglosando variables deportivas y de mercado..."):
             
+            # Gemini con prompt compreso automático
             role_gemini = (
-                "Eres el Analista Scout de Gemini. Procesa la base de datos certificada. "
-                "Desglosa el duelo directo abridor vs alineación, el estatus y desgaste de los bullpens, y cómo afectan las bajas al terreno de juego. "
-                "Entrega máximo 3 viñetas ultra-concisas."
+                "Eres el Analista Scout de Gemini. Procesa la data certificada. "
+                "Desglosa el duelo directo abridor vs alineación, estatus de bullpens y bajas. Máximo 3 viñetas concisas."
             )
             analisis_deportivo = consultar_ia(GEMINI, data_certificada, api_key, role_gemini, max_tokens=400)
             
-            # ELIMINAMOS EL PROMPT CERRADO PARA DEEPSEEK PARA EVITAR EL 'NONE'
+            # DeepSeek R1 LIBRE (es_deepseek=True activa el bypass del bozal)
             role_deepseek = (
                 "Eres el Oddsmaker de DeepSeek R1. Analiza el movimiento de líneas y calcula la probabilidad implícita "
                 "de los momios de Hard Rock Bet basados en la data provista. Encuentra si hay valor matemático (+EV). "
-                "Muestra tu análisis de forma clara y directa."
+                "Muestra tu análisis y conclusiones de forma directa, sin preocuparte por límites estrictos de palabras."
             )
-            # Pasamos un prompt limpio directo para que el modelo R1 pueda razonar sin trabarse
-            analisis_mercado = consultar_ia(DEEPSEEK, data_certificada, api_key, role_deepseek, max_tokens=700)
+            analisis_mercado = consultar_ia(DEEPSEEK, data_certificada, api_key, role_deepseek, max_tokens=800, es_deepseek=True)
             
             with col_gemini:
                 st.markdown("### 🔵 Gemini: Análisis Deportivo y Sabermetría")
