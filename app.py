@@ -89,7 +89,7 @@ if st.button("🚀 Iniciar Proceso de Decantación"):
         PERPLEXITY = "perplexity/sonar"
         GPT4O = "openai/gpt-4o"
         GEMINI = "google/gemini-3.1-pro-preview"
-        DEEPSEEK = "deepseek/deepseek-v4-pro"
+        DEEPSEEK = "deepseek/deepseek-v3.2"
         CLAUDE = "anthropic/claude-sonnet-4.5"
 
         input_inicial = f"LÍNEAS HARD ROCK:\n{lineas_raw}\n\nDATOS EXTRA DEL USUARIO:\n{datos_usuario}"
