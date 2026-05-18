@@ -75,7 +75,7 @@ if st.button("🚀 Iniciar Proceso de Decantación"):
     else:
         
         # DIRECTORIO DE LAS 5 MEJORES IAS PARA LA TAREA
-        PERPLEXITY = "perplexity/sonar-deep-research"
+        PERPLEXITY = "perplexity/sonar"
         GPT4O = "openai/gpt-4o"
         GEMINI = "google/gemini-3.1-pro-preview"
         DEEPSEEK = "deepseek/deepseek-v4-pro"
