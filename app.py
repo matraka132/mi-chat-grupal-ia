@@ -62,9 +62,9 @@ if st.button("🚀 Ejecutar Decantación Blindada"):
     if not api_key or not lineas_raw:
         st.error("⚠️ Verifica la API Key y las líneas del partido.")
     else:
-        # Motores oficiales
-         PERPLEXITY = "perplexity/sonar"
-       GPT4O = "openai/gpt-4o"
+        # Motores oficiales con espacios alineados a la perfección
+        PERPLEXITY = "perplexity/sonar"
+        GPT4O = "openai/gpt-4o"
         GEMINI = "google/gemini-3.1-flash-lite"
         O1_MINI = "deepseek/deepseek-v3.2"
         CLAUDE = "anthropic/claude-sonnet-4.5"
@@ -79,7 +79,6 @@ if st.button("🚀 Ejecutar Decantación Blindada"):
         
         with st.spinner("Buscando datos de forma independiente..."):
             
-            # Cada IA busca en internet partiendo ÚNICAMENTE del input original
             role_perp = "Eres Perplexity. Busca en la web los abridores de hoy para este juego de MLB, el estado del bullpen tras ayer y el viento/clima exacto. Formato corto."
             reporte_perp = consultar_ia(PERPLEXITY, bloque_entrada, api_key, role_perp, max_tokens=500, es_busqueda=True)
             
@@ -107,7 +106,6 @@ if st.button("🚀 Ejecutar Decantación Blindada"):
         st.header("🧠 Fase 2: Análisis Matemático del Mercado Abierto")
         with st.spinner("o1-mini desglosando momios sin contaminación de entorno..."):
             
-            # El Oddsmaker NO sabe quién pitchea ni el clima. Solo evalúa si los números de Hard Rock están amañados.
             role_o1 = (
                 "Eres el Oddsmaker de OpenAI o1-mini. Analiza fríamente las líneas y momios de Hard Rock Bet provistos en el prompt. "
                 "Calcula la probabilidad implícita y determina dónde se encuentra el valor matemático teórico (+EV). "
@@ -119,11 +117,10 @@ if st.button("🚀 Ejecutar Decantación Blindada"):
         st.divider()
 
         # =========================================================
-        # FASE 3: EL FILTRO SUPREMO Y DECANTACIÓN DE CONTRADICCIONES (Claude)
+        # FASE 3: EL FILTRO SUPREMO Y DECANTACIÓN (Claude)
         # =========================================================
         st.subheader("🏆 Fase 3: Sentencia del Tribunal de Contradicciones (Claude 3.5 Sonnet)")
         
-        # Juntamos los 4 reportes crudos para que Claude los destruya si no coinciden
         bloque_juez = f"""
         [LÍNEAS HARD ROCK]: {lineas_raw}
         [REPORTE INVESTIGACIÓN 1 (Perplexity)]: {reporte_perp}
