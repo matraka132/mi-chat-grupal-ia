@@ -64,7 +64,7 @@ if st.button("🚀 Ejecutar Decantación Blindada"):
     else:
         # Motores oficiales
          PERPLEXITY = "perplexity/sonar"
-        GPT4O = "openai/gpt-4o"
+       GPT4O = "openai/gpt-4o"
         GEMINI = "google/gemini-3.1-flash-lite"
         O1_MINI = "deepseek/deepseek-v3.2"
         CLAUDE = "anthropic/claude-sonnet-4.5"
