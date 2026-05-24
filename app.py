@@ -71,7 +71,7 @@ if st.button("🚀 Iniciar Pleno de 5 Predicciones"):
         GEMINI = "google/gemini-3.1-flash-lite"
         PERPLEXITY = "perplexity/sonar"
         GPT4O = "openai/gpt-4o"
-        DEEPSEEK = "deepseek/deepseek-r1:free"
+        DEEPSEEK = "deepseek/deepseek-v3.2"
         CLAUDE = "anthropic/claude-sonnet-4.5"
 
         bloque_entrada = f"PARTIDO:\n{lineas_raw}\n\nNOTAS EXTRA:\n{datos_usuario}"
