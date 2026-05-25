@@ -30,6 +30,7 @@ def consultar_ia(model_id, prompt, key, system_role, max_tokens=1000, es_busqued
         "X-Title": "Tribunal Arbitraje Deportivo"
     }
     
+    # MODIFICACIÓN DE SEGURIDAD: Si es el rastreo de Gemini o DeepSeek R1, quitamos el bozal por completo
     if es_busqueda or "deepseek-r1" in model_id:
         prompt_sistema = system_role
     else:
@@ -66,29 +67,30 @@ if st.button("⚖️ Iniciar Juicio de Valor"):
         st.error("⚠️ Falta la API Key o la línea a juzgar.")
     else:
         # Motores Oficiales de la Corte
-        GEMINI = "google/gemini-2.5-pro"
         PERPLEXITY = "perplexity/sonar"
         GPT4O = "openai/gpt-4o"
+        GEMINI = "google/gemini-3.1-flash-lite"
         DEEPSEEK = "deepseek/deepseek-v3.2"
         CLAUDE = "anthropic/claude-sonnet-4.5"
 
         bloque_entrada = f"LÍNEA BAJO ANÁLISIS:\n{lineas_raw}\n\nNOTAS EXTRA:\n{datos_usuario}"
 
         # =========================================================
-        # FASE 1: EL ARCHIVO DE EVIDENCIAS CENTRAL (Gemini)
+        # FASE 1: EL ARCHIVO DE EVIDENCIAS CENTRAL (Gemini - Liberado)
         # =========================================================
         st.header("🛡️ Fase 1: El Archivo de Evidencias Central (Gemini 2.5 Pro)")
         with st.spinner("Gemini ejecutando rastreo de verificación y construyendo el expediente..."):
             
             role_auditor = (
                 "Actúas como el Almacén Central de Evidencias de la Corte. Identifica de qué deporte y liga son las líneas ingresadas. "
-                "Busca en internet y verifica con precisión matemática absoluta para HOY lunes 25 de mayo de 2026 lo siguiente:\n"
-                "1) Alineaciones confirmadas o jugadores clave del partido.\n"
-                "2) Reporte oficial de lesionados o bajas de última hora.\n"
-                "3) Factores climáticos, de estadio o de fatiga (como partidos en días consecutivos).\n"
-                "Entrega exclusivamente los datos crudos en formato telegrama limpio. Prohibido emitir juicios o picks. Solo datos reales verificados."
+                "Busca en internet y verifica con precisión matemática absoluta para HOY los siguientes puntos de forma detallada:\n"
+                "1) Alineaciones o rotaciones completas confirmadas de ambos equipos.\n"
+                "2) Reporte médico oficial de bajas o lesionados de última hora.\n"
+                "3) Factores de entorno (velocidad del viento, dirección, clima del estadio o cansancio acumulado por viajes).\n"
+                "Entrega toda la información de forma clara, directa y estructurada en viñetas informativas. No dejes datos incompletos y no generes URLs."
             )
-            expediente_gemini = consultar_ia(GEMINI, bloque_entrada, api_key, role_auditor, max_tokens=700, es_busqueda=True)
+            # Pasamos es_busqueda=True para que se salte el PROMPT_CERRADO y escriba completo todo lo de Philadelphia
+            expediente_gemini = consultar_ia(GEMINI, bloque_entrada, api_key, role_auditor, max_tokens=1000, es_busqueda=True)
             st.code(expediente_gemini)
 
         st.divider()
@@ -99,7 +101,6 @@ if st.button("⚖️ Iniciar Juicio de Valor"):
         st.header("🔮 Fase 2: Ponencia de los Peritos Judiciales (Aislamiento)")
         col1, col2, col3 = st.columns(3)
         
-        # El prompt amarra a los peritos a alimentarse ÚNICAMENTE de la verdad de Gemini
         prompt_peritos = f"EXPEDIENTE DE VERIFICACIÓN (Gemini):\n{expediente_gemini}\n\nLÍNEA ORIGINAL:\n{lineas_raw}"
         
         with st.spinner("Los peritos analizan el expediente de Gemini de forma independiente..."):
@@ -121,7 +122,7 @@ if st.button("⚖️ Iniciar Juicio de Valor"):
             # Perito 3: Oddsmaker Matemático
             role_deep = (
                 "Eres el Perito Matemático (DeepSeek R1). Extrae del Expediente de Gemini las variables numéricas y analízalas contra los momios de Hard Rock Bet. "
-                "Calcula la probabilidad implícita. Determina con frialdad si la línea tiene valor real esperado (+EV) o si es una trampa diseñada para atrapar el dinero del público."
+                "Calcula la probabilidad implícita. Determina si la línea tiene valor real esperado (+EV) o si es una trampa. Muestra tus conclusiones."
             )
             ponencia_deep = consultar_ia(DEEPSEEK, prompt_peritos, api_key, role_deep, max_tokens=750)
             
@@ -138,7 +139,7 @@ if st.button("⚖️ Iniciar Juicio de Valor"):
         st.divider()
 
         # =========================================================
-        # FASE 3: DICTAMEN SUPREMO Y DETERMINACIÓN DE VALOR REAL
+        # FASE 4: DICTAMEN SUPREMO Y DETERMINACIÓN DE VALOR REAL
         # =========================================================
         st.subheader("🏆 Fase 3: Dictamen Supremo y Sentencia del Magistrado (Claude 3.5 Sonnet)")
         
@@ -155,7 +156,7 @@ if st.button("⚖️ Iniciar Juicio de Valor"):
                 "CRITERIOS DE SENTENCIA:\n"
                 "1. Si los peritos demuestran una ventaja estadística clara sobre el casino, dicta la jugada de mayor seguridad.\n"
                 "2. Dictamina con precisión matemática si la jugada ingresada por el usuario tiene 'VALOR REAL' o es una 'TRAMPA DEL CASINO'.\n"
-                "3. Si los datos del expediente de Gemini muestran demasiada inestabilidad o los peritos están divididos, decreta la sentencia como 'PASS / NO APRECIABLE' para proteger la banca.\n\n"
+                "3. Si los datos del expediente de Gemini muestran demasiada inestabilidad o los peritos están divididos, decreta la sentencia como 'PASS / NO APRECIABLE'.\n\n"
                 "Entrega tu sentencia usando estrictamente este formato directo:\n"
                 "- **Evaluación de la Línea:** [¿Tiene valor real (+EV) o es una trampa? Justifica en una frase corta]\n"
                 "- **Pick Oficial Dictaminado:** [Línea exacta y acción aconsejada, o PASS]\n"
