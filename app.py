@@ -2,34 +2,32 @@ import streamlit as st
 import requests
 import json
 
-# 1. Configuración de la interfaz
-st.set_page_config(page_title="Comité Multideporte 5-IA", layout="wide")
-st.title("🏛️ El Coliseo: Súper-Comité de 5 Predicciones (MLB & NBA)")
-st.markdown("Fase 1: Auditoría de Gemini | Fase 2: 5 Predicciones Ciegas de Élite | Fase 3: Veredicto de Máxima Seguridad")
+# 1. Configuración de la interfaz de la Corte
+st.set_page_config(page_title="Tribunal de Arbitraje Deportivo", layout="wide")
+st.title("🏛️ La Alta Corte: Tribunal de Decantación y Valor Real (+EV)")
+st.markdown("Corte Suprema Multideporte. Gemini actúa como Servidor de Evidencias; los peritos calculan y Claude dicta sentencia.")
 
-# Barra lateral
+# Barra lateral judicial
 with st.sidebar:
-    st.header("⚙️ Configuración del Pleno")
+    st.header("⚖️ Protocolo de la Corte")
     api_key = st.text_input("Introduce tu API Key de OpenRouter:", type="password")
     st.write("---")
     st.markdown("""
-    ### 🗳️ Los 5 Votos del Comité:
-    * 🔵 **Gemini 2.5 Pro** (Auditor y Scout)
-    * ⚫ **Perplexity Sonar** (Tendencias)
-    * 🛡️ **GPT-4o** (Matchup / Rotaciones)
-    * 🧠 **DeepSeek R1** (Lógica de Mercado)
-    * 🟠 **Claude 3.5 Sonnet** (Juez y Votante)
+    ### 📜 Estructura del Proceso:
+    1. 🔵 **Evidencia Central (Gemini):** Rastrea, verifica y almacena la data cruda.
+    2. 👥 **Peritos Judiciales (Perplexity, GPT-4o, DeepSeek):** Consumen la data de Gemini para calcular el valor real.
+    3. 🟠 **Magistrado Supremo (Claude 3.5):** Dictamina si hay valor o si es trampa.
     """)
 
-# PROMPT BASE ULTRA-COMPRESO
-PROMPT_CERRADO = "Actúa en un entorno cerrado. Ve directo al grano utilizando datos crudos y viñetas cortas. Prohibido introducciones, saludos o relleno.\n\n"
+# PROMPT BASE ULTRA-ESTRICTO PARA EVITAR CÁMARAS DE ECO
+PROMPT_CERRADO = "Entorno judicial cerrado. Prohibido introducciones, saludos o texto de relleno. Ve directo al grano usando datos crudos y viñetas.\n\n"
 
 def consultar_ia(model_id, prompt, key, system_role, max_tokens=1000, es_busqueda=False):
     headers = {
         "Authorization": f"Bearer {key.strip()}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://streamlit.app",
-        "X-Title": "Gran Comite Multideporte"
+        "X-Title": "Tribunal Arbitraje Deportivo"
     }
     
     if es_busqueda or "deepseek-r1" in model_id:
@@ -42,9 +40,10 @@ def consultar_ia(model_id, prompt, key, system_role, max_tokens=1000, es_busqued
         "messages": [
             {"role": "system", "content": prompt_sistema},
             {"role": "user", "content": prompt}
-        ],
-        "max_tokens": max_tokens
+        ]
     }
+    if "deepseek-r1" not in model_id:
+        payload["max_tokens"] = max_tokens
         
     try:
         response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, data=json.dumps(payload), timeout=120)
@@ -53,123 +52,118 @@ def consultar_ia(model_id, prompt, key, system_role, max_tokens=1000, es_busqued
         data = response.json()
         if "choices" in data and data["choices"][0]["message"]["content"] is not None:
             return data["choices"][0]["message"]["content"]
-        return "⚠️ Sin respuesta/Procesado internamente."
+        return "⚠️ Sin evidencias procesables."
     except Exception as e:
-        return f"❌ Error de conexión en {model_id}: {str(e)}"
+        return f"❌ Error de conexión: {str(e)}"
 
-# Entrada de datos unificada
-st.subheader("📋 Datos Iniciales de Hard Rock Bet (MLB o NBA)")
-lineas_raw = st.text_area("Pega las líneas aquí:", height=120, placeholder="Ej. NBA:\nLakers\nCeltics\nSpread: Celtics -5.5\nTotal: O/U 224.5\n\nEj. MLB:\nYankees\nMets\n-1.5 (+165)")
-datos_usuario = st.text_area("Notas o datos adicionales conocidos (Ej. Jugadores descartados, cansancio, etc.):", height=80)
+# Entrada universal de la Corte (Cualquier deporte)
+st.subheader("📋 Presentación de la Línea bajo Juicio")
+lineas_raw = st.text_area("Pega aquí las líneas de Hard Rock Bet (Cualquier Deporte - MLB, NBA, NHL, Fútbol, etc.):", height=120, placeholder="Ejemplo:\nAstros vs Yankees\nYankees Runline -1.5 (+120)\nTotal: O/U 8.5")
+datos_usuario = st.text_area("Notas adicionales o sospechas sobre la jugada (Opcional):", height=80)
 
-if st.button("🚀 Iniciar Pleno de 5 Predicciones Multideporte"):
+if st.button("⚖️ Iniciar Juicio de Valor"):
     if not api_key or not lineas_raw:
-        st.error("⚠️ Verifica la API Key y las líneas del partido.")
+        st.error("⚠️ Falta la API Key o la línea a juzgar.")
     else:
-        # Los 5 Motores Oficiales
-        GEMINI = "google/gemini-3.1-flash-lite"
+        # Motores Oficiales de la Corte
+        GEMINI = "google/gemini-2.5-pro"
         PERPLEXITY = "perplexity/sonar"
         GPT4O = "openai/gpt-4o"
         DEEPSEEK = "deepseek/deepseek-v3.2"
         CLAUDE = "anthropic/claude-sonnet-4.5"
 
-        bloque_entrada = f"PARTIDO:\n{lineas_raw}\n\nNOTAS EXTRA:\n{datos_usuario}"
+        bloque_entrada = f"LÍNEA BAJO ANÁLISIS:\n{lineas_raw}\n\nNOTAS EXTRA:\n{datos_usuario}"
 
         # =========================================================
-        # FASE 1: AUDITORÍA DE DATOS DE TERRENO (Gemini 2.5 Pro)
+        # FASE 1: EL ARCHIVO DE EVIDENCIAS CENTRAL (Gemini)
         # =========================================================
-        st.header("🛡️ Fase 1: Certificación y Filtro de Datos (Gemini)")
-        with st.spinner("Gemini detectando deporte y escaneando internet..."):
+        st.header("🛡️ Fase 1: El Archivo de Evidencias Central (Gemini 2.5 Pro)")
+        with st.spinner("Gemini ejecutando rastreo de verificación y construyendo el expediente..."):
             
             role_auditor = (
-                "Eres el Senior Auditor de Gemini. Tu función es identificar si el partido ingresado es de MLB o de NBA y buscar en la web los datos reales de HOY.\n\n"
-                "SI ES MLB, extrae estrictamente: 1) Lanzadores abridores confirmados (Mano, ERA). 2) Clima, viento y estadio. 3) Lesionados.\n"
-                "SI ES NBA, extrae estrictamente: 1) Reporte oficial de lesionados de última hora (Confirmados OUT, Questionable o Probable). 2) Rendimiento reciente (Racha en los últimos 5 juegos y si es el segundo juego de un Back-to-Back). 3) Eficiencia ofensiva/defensiva de ambos equipos.\n\n"
-                "Genera una base de datos 100% verídica en formato telegrama conciso. Cero especulaciones, cero relleno, solo datos fríos."
+                "Actúas como el Almacén Central de Evidencias de la Corte. Identifica de qué deporte y liga son las líneas ingresadas. "
+                "Busca en internet y verifica con precisión matemática absoluta para HOY lunes 25 de mayo de 2026 lo siguiente:\n"
+                "1) Alineaciones confirmadas o jugadores clave del partido.\n"
+                "2) Reporte oficial de lesionados o bajas de última hora.\n"
+                "3) Factores climáticos, de estadio o de fatiga (como partidos en días consecutivos).\n"
+                "Entrega exclusivamente los datos crudos en formato telegrama limpio. Prohibido emitir juicios o picks. Solo datos reales verificados."
             )
-            data_certificada = consultar_ia(GEMINI, bloque_entrada, api_key, role_auditor, max_tokens=650, es_busqueda=True)
-            st.code(data_certificada)
+            expediente_gemini = consultar_ia(GEMINI, bloque_entrada, api_key, role_auditor, max_tokens=700, es_busqueda=True)
+            st.code(expediente_gemini)
 
         st.divider()
 
         # =========================================================
-        # FASE 2: PREDICCIONES SIMULTÁNEAS EN PARALELO (Las 5 IAs)
+        # FASE 2: PONENCIA DE PERITOS (Consumen la data de Gemini)
         # =========================================================
-        st.header("🔮 Fase 2: Las 5 Predicciones del Comité")
+        st.header("🔮 Fase 2: Ponencia de los Peritos Judiciales (Aislamiento)")
+        col1, col2, col3 = st.columns(3)
         
-        prompt_analisis = f"DATA CERTIFICADA DE HOY:\n{data_certificada}\n\nLÍNEAS EN HARD ROCK BET:\n{lineas_raw}"
+        # El prompt amarra a los peritos a alimentarse ÚNICAMENTE de la verdad de Gemini
+        prompt_peritos = f"EXPEDIENTE DE VERIFICACIÓN (Gemini):\n{expediente_gemini}\n\nLÍNEA ORIGINAL:\n{lineas_raw}"
         
-        col1, col2, col3, col4, col5 = st.columns(5)
-        
-        with st.spinner("El pleno de las 5 IAs calculando sus picks de forma aislada..."):
+        with st.spinner("Los peritos analizan el expediente de Gemini de forma independiente..."):
             
-            # 1. Predicción de Gemini
-            role_gem_pred = "Eres el Analista Scout de Gemini. Estudia la data y las líneas. Genera tu predicción directa del partido indicando la ventaja de las rotaciones/abridores y tu pick propuesto."
-            prediccion_gemini = consultar_ia(GEMINI, prompt_analisis, api_key, role_gem_pred, max_tokens=450)
+            # Perito 1: Tendencias e Historial
+            role_perp = (
+                "Eres el Perito de Tendencias (Perplexity). Utiliza el Expediente de Gemini para buscar patrones históricos similares. "
+                "Determina si la jugada propuesta tiene sustento en rachas o datos históricos recientes. Da tu conclusión y tu pick."
+            )
+            ponencia_perp = consultar_ia(PERPLEXITY, prompt_peritos, api_key, role_perp, max_tokens=450)
             
-            # 2. Predicción de Perplexity
-            role_perp = "Eres el Analista de Tendencias (Perplexity). Estudia la data certificada y las líneas. Genera una predicción corta indicando qué lado tiene valor histórico o tendencia a favor y tu pick."
-            prediccion_perp = consultar_ia(PERPLEXITY, prompt_analisis, api_key, role_perp, max_tokens=450)
+            # Perito 2: Matchup y Táctica de Terreno
+            role_gpt = (
+                "Eres el Perito Táctico (GPT-4o). Extrae del Expediente de Gemini el duelo directo entre los jugadores disponibles. "
+                "Evalúa cómo afectan las bajas al terreno de juego y calcula qué equipo tiene la ventaja física o táctica real hoy. Define tu pick."
+            )
+            ponencia_gpt = consultar_ia(GPT4O, prompt_peritos, api_key, role_gpt, max_tokens=450)
             
-            # 3. Predicción de GPT-4o
-            role_gpt = "Eres el Analista de Matchups (GPT-4o). Analiza el emparejamiento directo entre plantillas (Abridor vs Bateadores en MLB, o Quinteto titular/Banca en NBA) basándote en la data certificada. Da tu pick."
-            prediccion_gpt = consultar_ia(GPT4O, prompt_analisis, api_key, role_gpt, max_tokens=450)
-            
-            # 4. Predicción de DeepSeek R1
-            role_deep = "Eres el Oddsmaker de DeepSeek R1. Analiza el valor matemático de las cuotas de Hard Rock Bet (Moneylines, Spreads o Totales) contra la data certificada. Calcula probabilidad implícita y da tu pick definitivo."
-            prediccion_deep = consultar_ia(DEEPSEEK, prompt_analisis, api_key, role_deep, max_tokens=700)
-            
-            # 5. Predicción de Claude 3.5 Sonnet
-            role_claude_pred = "Eres el Analista de Contexto de Claude. Evalúa la data y define cuál es la jugada más sensata, estable y de menor riesgo según las variables del juego. Entrega tu pick en una frase."
-            prediccion_claude = consultar_ia(CLAUDE, prompt_analisis, api_key, role_claude_pred, max_tokens=450)
+            # Perito 3: Oddsmaker Matemático
+            role_deep = (
+                "Eres el Perito Matemático (DeepSeek R1). Extrae del Expediente de Gemini las variables numéricas y analízalas contra los momios de Hard Rock Bet. "
+                "Calcula la probabilidad implícita. Determina con frialdad si la línea tiene valor real esperado (+EV) o si es una trampa diseñada para atrapar el dinero del público."
+            )
+            ponencia_deep = consultar_ia(DEEPSEEK, prompt_peritos, api_key, role_deep, max_tokens=750)
             
             with col1:
-                st.markdown("### 🔵 Gemini")
-                st.info(prediccion_gemini)
+                st.markdown("### ⚫ Perito 1: Perplexity (Tendencias)")
+                st.info(ponencia_perp)
             with col2:
-                st.markdown("### ⚫ Perplexity")
-                st.info(prediccion_perp)
+                st.markdown("### 🛡️ Perito 2: GPT-4o (Táctica de Terreno)")
+                st.info(ponencia_gpt)
             with col3:
-                st.markdown("### 🛡️ GPT-4o")
-                st.info(prediccion_gpt)
-            with col4:
-                st.markdown("### 🧠 DeepSeek R1")
-                st.info(prediccion_deep)
-            with col5:
-                st.markdown("### 🟠 Claude 3.5")
-                st.info(prediccion_claude)
+                st.markdown("### 🧠 Perito 3: DeepSeek R1 (Valor Matemático)")
+                st.info(ponencia_deep)
 
         st.divider()
 
         # =========================================================
-        # FASE 3: CONSENSO TOTAL Y JUGADAS MÁS SEGURAS
+        # FASE 3: DICTAMEN SUPREMO Y DETERMINACIÓN DE VALOR REAL
         # =========================================================
-        st.subheader("🏆 Fase 3: Consenso Judicial y Selección de Jugadas Seguras")
+        st.subheader("🏆 Fase 3: Dictamen Supremo y Sentencia del Magistrado (Claude 3.5 Sonnet)")
         
-        bloque_consenso = f"""
-        DATA CERTIFICADA DE ORIGEN: {data_certificada}
-        VOTO 1 (Gemini): {prediccion_gemini}
-        VOTO 2 (Perplexity): {prediccion_perp}
-        VOTO 3 (GPT-4o): {prediccion_gpt}
-        VOTO 4 (DeepSeek): {prediccion_deep}
-        VOTO 5 (Claude): {prediccion_claude}
+        expediente_completo = f"""
+        EVIDENCIA CERTIFICADA (Gemini): {expediente_gemini}
+        PONENCIA TENDENCIAS (Perplexity): {ponencia_perp}
+        PONENCIA TÁCTICA (GPT-4o): {ponencia_gpt}
+        PONENCIA MATEMÁTICA (DeepSeek): {ponencia_deep}
         """
         
-        with st.spinner("Claude unificando el pleno y calculando las apuestas de mayor fiabilidad..."):
-            role_juez = (
-                "Eres el Juez Supremo del Consenso de Claude 3.5 Sonnet. Tu objetivo es recibir las 5 predicciones del comité e identificar las jugadas más seguras del mercado (sin importar si es MLB o NBA).\n\n"
-                "REGLAS:\n"
-                "1. Si 3 o más IAs coinciden plenamente en un pick (sea el ganador, el spread de puntos o el Over/Under), esa es la Jugada Principal de alta fiabilidad.\n"
-                "2. Si hay una división total de opiniones, debes decretar PASS/NO BET debido a alta volatilidad.\n"
-                "3. Ignora textos de relleno e introducciones.\n\n"
-                "Responde estrictamente con esta estructura limpia:\n"
-                "- **Recuento de Votos:** [Menciona de forma directa qué pick propuso cada una de las 5 IAs]\n"
-                "- **Jugada Más Segura del Día:** [Línea exacta de Hard Rock Bet y acción recomendada]\n"
-                "- **Grado de Consenso:** [Unanimidad (5/5) / Mayoría Fuerte (4/5) / Mayoría Simple (3/5) / Sin Consenso (PASS)]\n"
-                "- **Sustento del Dictamen:** [La razón técnica, táctica y matemática por la cual esta selección es la más sólida]\n"
-                "- **Alerta de Peligro:** [Qué factor o imprevisto específico (clima en MLB o ausencias de última hora en NBA) podría tumbar la jugada]"
+        with st.spinner("El Magistrado Claude sopesando el caso y decantando el valor real..."):
+            role_magistrado = (
+                "Eres el Magistrado Supremo de Claude 3.5 Sonnet. Tu única misión es juzgar las ponencias de los peritos y determinar el valor real (+EV) de la línea.\n\n"
+                "CRITERIOS DE SENTENCIA:\n"
+                "1. Si los peritos demuestran una ventaja estadística clara sobre el casino, dicta la jugada de mayor seguridad.\n"
+                "2. Dictamina con precisión matemática si la jugada ingresada por el usuario tiene 'VALOR REAL' o es una 'TRAMPA DEL CASINO'.\n"
+                "3. Si los datos del expediente de Gemini muestran demasiada inestabilidad o los peritos están divididos, decreta la sentencia como 'PASS / NO APRECIABLE' para proteger la banca.\n\n"
+                "Entrega tu sentencia usando estrictamente este formato directo:\n"
+                "- **Evaluación de la Línea:** [¿Tiene valor real (+EV) o es una trampa? Justifica en una frase corta]\n"
+                "- **Pick Oficial Dictaminado:** [Línea exacta y acción aconsejada, o PASS]\n"
+                "- **Grado de Fiabilidad:** [Alto / Medio / Bajo / Nulo]\n"
+                "- **Sustento del Fallo:** [Argumento definitivo que unifica la táctica de terreno con la matemática de cuotas]\n"
+                "- **Peligro en el Proceso:** [Qué factor o imprevisto específico del expediente pone en riesgo la inversión]"
             )
-            veredicto_final = consultar_ia(CLAUDE, bloque_consenso, api_key, role_juez, max_tokens=650)
+            sentencia_final = consultar_ia(CLAUDE, expediente_completo, api_key, role_magistrado, max_tokens=650)
             
-            st.success(veredicto_final)
+            st.success(sentencia_final)
             st.balloons()
