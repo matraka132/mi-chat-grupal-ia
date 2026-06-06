@@ -107,7 +107,7 @@ if st.button("🚀 Iniciar Proceso de Consenso"):
         
         with st.spinner('Los matemáticos y analistas debaten las probabilidades...'):
             res_deepseek = consultar_ia("deepseek/deepseek-v3.2", prompt_debate, api_key, "Eres DeepSeek Coder. Tu fuerte es la lógica matemática pura y el cálculo de probabilidades.")
-            res_codestral = consultar_ia("mistralai/codestral-embed-2505", prompt_debate, api_key, "Eres el Auditor Eficiente. Encuentra contradicciones numéricas entre los reportes.")
+            res_codestral = consultar_ia("anthropic/claude-sonnet-4.5", prompt_debate, api_key, "Eres el Auditor Eficiente. Encuentra contradicciones numéricas entre los reportes.")
             res_grok = consultar_ia("x-ai/grok-4.3", prompt_debate, api_key, "Eres Grok 3. Analiza las tendencias de última hora y el movimiento de líneas coloquiales.")
             res_gemini = consultar_ia("~google/gemini-pro-latest", prompt_debate, api_key, "Eres Gemini. Procesa todo el contexto masivo de las respuestas previas.")
 
