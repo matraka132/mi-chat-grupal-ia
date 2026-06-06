@@ -2,169 +2,162 @@ import streamlit as st
 import requests
 import json
 
-# 1. Configuración de la interfaz de la Corte
-st.set_page_config(page_title="Tribunal de Arbitraje Deportivo", layout="wide")
-st.title("🏛️ La Alta Corte: Tribunal de Decantación y Valor Real (+EV)")
-st.markdown("Corte Suprema Multideporte. Gemini actúa como Servidor de Evidencias; los peritos calculan y Claude dicta sentencia.")
+# 1. Configuración de pantalla ancha
+st.set_page_config(page_title="Coliseo de Expertos AI", layout="wide")
+st.title("🏛️ El Coliseo: Consenso de 10 Agentes de IA")
+st.markdown("Flujo avanzado de Propuesta, Debate de Especialistas y Veredicto Final Decantado.")
 
-# Barra lateral judicial
+# 2. Barra lateral para la API Key
 with st.sidebar:
-    st.header("⚖️ Protocolo de la Corte")
+    st.header("🔑 Acceso")
     api_key = st.text_input("Introduce tu API Key de OpenRouter:", type="password")
     st.write("---")
     st.markdown("""
-    ### 📜 Estructura del Proceso:
-    1. 🔵 **Evidencia Central (Gemini):** Rastrea, verifica y almacena la data cruda.
-    2. 👥 **Peritos Judiciales (Perplexity, GPT-4o, DeepSeek):** Consumen la data de Gemini para calcular el valor real.
-    3. 🟠 **Magistrado Supremo (Claude 3.5):** Dictamina si hay valor o si es trampa.
+    ### 🧠 Roles del Panel:
+    * **Razonamiento:** OpenAI o1/o3, Claude 3.5 Sonnet
+    * **Técnicos:** DeepSeek Coder, Codestral
+    * **Open-Source:** Llama 3, Mixtral 8x22B
+    * **Datos/Búsqueda:** Perplexity Sonar, Cohere Command R+
+    * **Contexto/Tendencias:** Gemini 1.5 Pro, Grok 3
     """)
 
-# PROMPT BASE ULTRA-ESTRICTO PARA EVITAR CÁMARAS DE ECO
-PROMPT_CERRADO = "Entorno judicial cerrado. Prohibido introducciones, saludos o texto de relleno. Ve directo al grano usando datos crudos y viñetas.\n\n"
-
-def consultar_ia(model_id, prompt, key, system_role, max_tokens=1000, es_busqueda=False):
+# 3. Función optimizada para conectar con OpenRouter
+def consultar_ia(model_id, prompt, key, system_prompt="Eres un analista experto."):
     headers = {
         "Authorization": f"Bearer {key.strip()}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://streamlit.app",
-        "X-Title": "Tribunal Arbitraje Deportivo"
+        "X-Title": "Coliseo de Expertos AI"
     }
-    
-    # MODIFICACIÓN DE SEGURIDAD: Si es el rastreo de Gemini o DeepSeek R1, quitamos el bozal por completo
-    if es_busqueda or "deepseek-r1" in model_id:
-        prompt_sistema = system_role
-    else:
-        prompt_sistema = PROMPT_CERRADO + system_role
     
     payload = {
         "model": model_id,
         "messages": [
-            {"role": "system", "content": prompt_sistema},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
         ]
     }
-    if "deepseek-r1" not in model_id:
-        payload["max_tokens"] = max_tokens
-        
+    
     try:
-        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, data=json.dumps(payload), timeout=120)
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            data=json.dumps(payload),
+            timeout=90 # Tiempo extendido para modelos de razonamiento profundo
+        )
         if response.status_code != 200:
-            return f"❌ Error en {model_id}: {response.text}"
-        data = response.json()
-        if "choices" in data and data["choices"][0]["message"]["content"] is not None:
-            return data["choices"][0]["message"]["content"]
-        return "⚠️ Sin evidencias procesables."
+            return f"❌ Error {response.status_code}: {response.text}"
+        return response.json()["choices"][0]["message"]["content"]
     except Exception as e:
         return f"❌ Error de conexión: {str(e)}"
 
-# Entrada universal de la Corte (Cualquier deporte)
-st.subheader("📋 Presentación de la Línea bajo Juicio")
-lineas_raw = st.text_area("Pega aquí las líneas de Hard Rock Bet (Cualquier Deporte - MLB, NBA, NHL, Fútbol, etc.):", height=120, placeholder="Ejemplo:\nAstros vs Yankees\nYankees Runline -1.5 (+120)\nTotal: O/U 8.5")
-datos_usuario = st.text_area("Notas adicionales o sospechas sobre la jugada (Opcional):", height=80)
+# 4. Entrada de datos del usuario
+pregunta = st.text_area("✍️ Introduce los datos, partidos o cuotas a analizar:", placeholder="Ej: Datos de abridores, líneas de Hard Rock Bet, estadísticas recientes...")
 
-if st.button("⚖️ Iniciar Juicio de Valor"):
-    if not api_key or not lineas_raw:
-        st.error("⚠️ Falta la API Key o la línea a juzgar.")
+if st.button("🚀 Iniciar Proceso de Consenso"):
+    if not api_key:
+        st.error("⚠️ Falta la API Key en la barra lateral.")
+    elif not pregunta:
+        st.warning("⚠️ Escribe la consulta o pega la información deportiva.")
     else:
-        # Motores Oficiales de la Corte
-        PERPLEXITY = "perplexity/sonar"
-        GPT4O = "openai/gpt-4o"
-        GEMINI = "google/gemini-3.1-flash-lite"
-        DEEPSEEK = "deepseek/deepseek-v3.2"
-        CLAUDE = "anthropic/claude-sonnet-4.5"
-
-        bloque_entrada = f"LÍNEA BAJO ANÁLISIS:\n{lineas_raw}\n\nNOTAS EXTRA:\n{datos_usuario}"
-
-        # =========================================================
-        # FASE 1: EL ARCHIVO DE EVIDENCIAS CENTRAL (Gemini - Liberado)
-        # =========================================================
-        st.header("🛡️ Fase 1: El Archivo de Evidencias Central (Gemini 2.5 Pro)")
-        with st.spinner("Gemini ejecutando rastreo de verificación y construyendo el expediente..."):
-            
-            role_auditor = (
-                "Actúas como el Almacén Central de Evidencias de la Corte. Identifica de qué deporte y liga son las líneas ingresadas. "
-                "Busca en internet y verifica con precisión matemática absoluta para HOY los siguientes puntos de forma detallada:\n"
-                "1) Alineaciones o rotaciones completas confirmadas de ambos equipos.\n"
-                "2) Reporte médico oficial de bajas o lesionados de última hora.\n"
-                "3) Factores de entorno (velocidad del viento, dirección, clima del estadio o cansancio acumulado por viajes).\n"
-                "Entrega toda la información de forma clara, directa y estructurada en viñetas informativas. No dejes datos incompletos y no generes URLs."
-            )
-            # Pasamos es_busqueda=True para que se salte el PROMPT_CERRADO y escriba completo todo lo de Philadelphia
-            expediente_gemini = consultar_ia(GEMINI, bloque_entrada, api_key, role_auditor, max_tokens=1000, es_busqueda=True)
-            st.code(expediente_gemini)
-
-        st.divider()
-
-        # =========================================================
-        # FASE 2: PONENCIA DE PERITOS (Consumen la data de Gemini)
-        # =========================================================
-        st.header("🔮 Fase 2: Ponencia de los Peritos Judiciales (Aislamiento)")
+        
+        # ==========================================
+        # FASE 1: PROPUESTA E INVESTIGACIÓN DE HECHOS
+        # ==========================================
+        st.header("📋 Fase 1: Investigación de Hechos e Hipótesis")
+        
+        # Aquí elegimos a los especialistas en traer datos frescos y balanceados
         col1, col2, col3 = st.columns(3)
         
-        prompt_peritos = f"EXPEDIENTE DE VERIFICACIÓN (Gemini):\n{expediente_gemini}\n\nLÍNEA ORIGINAL:\n{lineas_raw}"
-        
-        with st.spinner("Los peritos analizan el expediente de Gemini de forma independiente..."):
-            
-            # Perito 1: Tendencias e Historial
-            role_perp = (
-                "Eres el Perito de Tendencias (Perplexity). Utiliza el Expediente de Gemini para buscar patrones históricos similares. "
-                "Determina si la jugada propuesta tiene sustento en rachas o datos históricos recientes. Da tu conclusión y tu pick."
-            )
-            ponencia_perp = consultar_ia(PERPLEXITY, prompt_peritos, api_key, role_perp, max_tokens=450)
-            
-            # Perito 2: Matchup y Táctica de Terreno
-            role_gpt = (
-                "Eres el Perito Táctico (GPT-4o). Extrae del Expediente de Gemini el duelo directo entre los jugadores disponibles. "
-                "Evalúa cómo afectan las bajas al terreno de juego y calcula qué equipo tiene la ventaja física o táctica real hoy. Define tu pick."
-            )
-            ponencia_gpt = consultar_ia(GPT4O, prompt_peritos, api_key, role_gpt, max_tokens=450)
-            
-            # Perito 3: Oddsmaker Matemático
-            role_deep = (
-                "Eres el Perito Matemático (DeepSeek R1). Extrae del Expediente de Gemini las variables numéricas y analízalas contra los momios de Hard Rock Bet. "
-                "Calcula la probabilidad implícita. Determina si la línea tiene valor real esperado (+EV) o si es una trampa. Muestra tus conclusiones."
-            )
-            ponencia_deep = consultar_ia(DEEPSEEK, prompt_peritos, api_key, role_deep, max_tokens=750)
-            
+        with st.spinner('Perplexity investiga la web, Cohere y Llama analizan...'):
+            # Usamos IDs estándar y compatibles de OpenRouter
+            res_perplexity = consultar_ia("perplexity/sonar-reasoning", pregunta, api_key, "Eres el Fact-Checker. Trae datos reales, climas, estadios o lesiones de última hora.")
+            res_cohere = consultar_ia("cohere/command-r-plus", pregunta, api_key, "Eres el Administrador de Datos. Cruza las estadísticas frías sin inventar nada.")
+            res_llama = consultar_ia("meta-llama/llama-3-70b-instruct", pregunta, api_key, "Eres el Generalista Rápido. Da una perspectiva estadística directa.")
+
             with col1:
-                st.markdown("### ⚫ Perito 1: Perplexity (Tendencias)")
-                st.info(ponencia_perp)
+                st.markdown("### 🔍 Perplexity (Fact-Checking)")
+                st.info(res_perplexity)
             with col2:
-                st.markdown("### 🛡️ Perito 2: GPT-4o (Táctica de Terreno)")
-                st.info(ponencia_gpt)
+                st.markdown("### 📊 Cohere Command R+")
+                st.info(res_cohere)
             with col3:
-                st.markdown("### 🧠 Perito 3: DeepSeek R1 (Valor Matemático)")
-                st.info(ponencia_deep)
+                st.markdown("### 🦙 Llama 3 (Perspectiva)")
+                st.info(res_llama)
 
         st.divider()
 
-        # =========================================================
-        # FASE 4: DICTAMEN SUPREMO Y DETERMINACIÓN DE VALOR REAL
-        # =========================================================
-        st.subheader("🏆 Fase 3: Dictamen Supremo y Sentencia del Magistrado (Claude 3.5 Sonnet)")
+        # ==========================================
+        # FASE 2: DEBATE TÉCNICO Y CRÍTICA CRUZADA
+        # ==========================================
+        st.header("💻 Fase 2: Filtro Técnico y Tendencias (Debate)")
         
-        expediente_completo = f"""
-        EVIDENCIA CERTIFICADA (Gemini): {expediente_gemini}
-        PONENCIA TENDENCIAS (Perplexity): {ponencia_perp}
-        PONENCIA TÁCTICA (GPT-4o): {ponencia_gpt}
-        PONENCIA MATEMÁTICA (DeepSeek): {ponencia_deep}
+        # Pasamos la información recolectada en la Fase 1 a los matemáticos y analistas de tendencias
+        prompt_debate = f"""
+        PREGUNTA ORIGINAL DEL USUARIO: {pregunta}
+        
+        DATOS RECOLECTADOS POR TUS COMPAÑEROS:
+        - Reporte Web (Perplexity): {res_perplexity}
+        - Análisis Estadístico (Cohere): {res_cohere}
+        
+        Tu tarea: Analiza estos datos. Si eres DeepSeek/Codestral, busca fallos matemáticos o de lógica en las probabilidades. Si eres Grok/Mixtral/Gemini, evalúa tendencias de última hora y el comportamiento de las líneas. Ofrece tu crítica.
         """
         
-        with st.spinner("El Magistrado Claude sopesando el caso y decantando el valor real..."):
-            role_magistrado = (
-                "Eres el Magistrado Supremo de Claude 3.5 Sonnet. Tu única misión es juzgar las ponencias de los peritos y determinar el valor real (+EV) de la línea.\n\n"
-                "CRITERIOS DE SENTENCIA:\n"
-                "1. Si los peritos demuestran una ventaja estadística clara sobre el casino, dicta la jugada de mayor seguridad.\n"
-                "2. Dictamina con precisión matemática si la jugada ingresada por el usuario tiene 'VALOR REAL' o es una 'TRAMPA DEL CASINO'.\n"
-                "3. Si los datos del expediente de Gemini muestran demasiada inestabilidad o los peritos están divididos, decreta la sentencia como 'PASS / NO APRECIABLE'.\n\n"
-                "Entrega tu sentencia usando estrictamente este formato directo:\n"
-                "- **Evaluación de la Línea:** [¿Tiene valor real (+EV) o es una trampa? Justifica en una frase corta]\n"
-                "- **Pick Oficial Dictaminado:** [Línea exacta y acción aconsejada, o PASS]\n"
-                "- **Grado de Fiabilidad:** [Alto / Medio / Bajo / Nulo]\n"
-                "- **Sustento del Fallo:** [Argumento definitivo que unifica la táctica de terreno con la matemática de cuotas]\n"
-                "- **Peligro en el Proceso:** [Qué factor o imprevisto específico del expediente pone en riesgo la inversión]"
-            )
-            sentencia_final = consultar_ia(CLAUDE, expediente_completo, api_key, role_magistrado, max_tokens=650)
+        col4, col5, col6, col7 = st.columns(4)
+        
+        with st.spinner('Los matemáticos y analistas debaten las probabilidades...'):
+            res_deepseek = consultar_ia("deepseek/deepseek-chat", prompt_debate, api_key, "Eres DeepSeek Coder. Tu fuerte es la lógica matemática pura y el cálculo de probabilidades.")
+            res_codestral = consultar_ia("mistralai/codestral-22b-", prompt_debate, api_key, "Eres el Auditor Eficiente. Encuentra contradicciones numéricas entre los reportes.")
+            res_grok = consultar_ia("x-ai/grok-3", prompt_debate, api_key, "Eres Grok 3. Analiza las tendencias de última hora y el movimiento de líneas coloquiales.")
+            res_gemini = consultar_ia("google/gemini-pro-1.5", prompt_debate, api_key, "Eres Gemini. Procesa todo el contexto masivo de las respuestas previas.")
+
+            with col4:
+                st.markdown("### 📐 DeepSeek (Matemático)")
+                st.write(res_deepseek)
+            with col5:
+                st.markdown("### 🧮 Codestral (Auditor)")
+                st.write(res_codestral)
+            with col6:
+                st.markdown("### ⚫ Grok 3 (Tendencias)")
+                st.write(res_grok)
+            with col7:
+                st.markdown("### 🔵 Gemini 1.5 Pro (Contexto)")
+                st.write(res_gemini)
+
+        st.divider()
+
+        # ==========================================
+        # FASE 3: EL VEREDICTO DE LOS PESOS PESADOS
+        # ==========================================
+        st.header("🏆 Fase 3: Veredicto de los Pesos Pesados")
+        
+        # Recolectamos absolutamente TODO el hilo de la conversación
+        debate_completo = f"""
+        PREGUNTA DEL USUARIO: {pregunta}
+        
+        FASE 1 (Hechos):
+        Perplexity: {res_perplexity}
+        Cohere: {res_cohere}
+        
+        FASE 2 (Debate Probabilidades):
+        DeepSeek: {res_deepseek}
+        Grok 3: {res_grok}
+        Gemini: {res_gemini}
+        """
+        
+        col_juez1, col_juez2 = st.columns(2)
+        
+        with st.spinner('Los Jueces Finales (Modelos de Razonamiento) están dictaminando...'):
+            # OpenAI o1/o3 o Claude 3.5 Sonnet actúan como el tribunal supremo
+            res_openai_o = consultar_ia("openai/o1-mini", debate_completo, api_key, "Eres el Pensador Profundo de OpenAI. Tu fortaleza es la lógica estricta. Dictamina el pick con mayor valor real.")
+            res_claude = consultar_ia("anthropic/claude-3.5-sonnet", debate_completo, api_key, "Eres el Analista Clínico de Anthropic. Revisa los argumentos de todos, elimina contradicciones y redacta la conclusión definitiva de forma estructurada.")
             
-            st.success(sentencia_final)
-            st.balloons()
+            with col_juez1:
+                st.markdown("### 🧠 OpenAI o1-mini (Lógica Pura)")
+                st.success(res_openai_o)
+            with col_juez2:
+                st.markdown("### 🟠 Claude 3.5 Sonnet (Editor Jefe)")
+                st.success(res_claude)
+                
+        # Consenso definitivo unificado
+        st.balloons()
