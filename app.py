@@ -72,7 +72,7 @@ if st.button("🚀 Iniciar Proceso de Consenso"):
         with st.spinner('Perplexity investiga la web, Cohere y Llama analizan...'):
             # Usamos IDs estándar y compatibles de OpenRouter
             res_perplexity = consultar_ia("perplexity/sonar", pregunta, api_key, "Eres el Fact-Checker. Trae datos reales, climas, estadios o lesiones de última hora.")
-            res_cohere = consultar_ia("cohere/command-r-plus-08-2024", pregunta, api_key, "Eres el Administrador de Datos. Cruza las estadísticas frías sin inventar nada.")
+            res_cohere = consultar_ia("deepseek/deepseek-v3.2", pregunta, api_key, "Eres el Administrador de Datos. Cruza las estadísticas frías sin inventar nada.")
             res_llama = consultar_ia("meta-llama/llama-3.3-70b-instruct", pregunta, api_key, "Eres el Generalista Rápido. Da una perspectiva estadística directa.")
 
             with col1:
@@ -149,8 +149,8 @@ if st.button("🚀 Iniciar Proceso de Consenso"):
         
         with st.spinner('Los Jueces Finales (Modelos de Razonamiento) están dictaminando...'):
             # OpenAI o1/o3 o Claude 3.5 Sonnet actúan como el tribunal supremo
-            res_openai_o = consultar_ia("openai/o1-mini", debate_completo, api_key, "Eres el Pensador Profundo de OpenAI. Tu fortaleza es la lógica estricta. Dictamina el pick con mayor valor real.")
-            res_claude = consultar_ia("anthropic/claude-3.5-sonnet", debate_completo, api_key, "Eres el Analista Clínico de Anthropic. Revisa los argumentos de todos, elimina contradicciones y redacta la conclusión definitiva de forma estructurada.")
+            res_openai_o = consultar_ia("openai/gpt-4o", debate_completo, api_key, "Eres el Pensador Profundo de OpenAI. Tu fortaleza es la lógica estricta. Dictamina el pick con mayor valor real.")
+            res_claude = consultar_ia("anthropic/claude-sonnet-4.5", debate_completo, api_key, "Eres el Analista Clínico de Anthropic. Revisa los argumentos de todos, elimina contradicciones y redacta la conclusión definitiva de forma estructurada.")
             
             with col_juez1:
                 st.markdown("### 🧠 OpenAI o1-mini (Lógica Pura)")
