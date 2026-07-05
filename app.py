@@ -96,7 +96,7 @@ if procesar:
             prompt_debate = f"Pregunta: {pregunta}\nReporte: {call_perplexity['content'] if call_perplexity['status'] == 'OK' else ''}\nEstadísticas: {call_cohere['content'] if call_cohere['status'] == 'OK' else ''}"
             
             call_deepseek = consultar_ia("deepseek/deepseek-v3.2", prompt_debate, api_key, "Eres DeepSeek Coder. Tu fuerte es la lógica matemática pura y el cálculo de probabilidades.")
-            call_codestral = consultar_ia("anthropic/claude-sonnet-4.5", prompt_debate, api_key, "Eres el Auditor Eficiente. Encuentra contradicciones numéricas entre los reportes.")
+            call_codestral = consultar_ia("anthropic/claude-sonnet-5", prompt_debate, api_key, "Eres el Auditor Eficiente. Encuentra contradicciones numéricas entre los reportes.")
             call_grok = consultar_ia("x-ai/grok-4.3", prompt_debate, api_key, "Eres Grok 3. Analiza las tendencias de última hora y el movimiento de líneas coloquiales.")
             call_gemini = consultar_ia("~google/gemini-pro-latest", prompt_debate, api_key, "Eres Gemini. Procesa todo el contexto masivo de las respuestas previas.")
 
@@ -108,7 +108,7 @@ if procesar:
             """
             
             call_claude = consultar_ia(
-                "anthropic/claude-sonnet-4.5", 
+                "anthropic/claude-sonnet-5", 
                 debate_completo, 
                 api_key, 
                 "Eres el Analista Clínico de Anthropic. Revisa los argumentos válidos, identifica trampas del mercado y entrega estricta y únicamente las 2 o 3 mejores jugadas con más factor de ganar de forma resumida, usando negritas y viñetas para móvil."
