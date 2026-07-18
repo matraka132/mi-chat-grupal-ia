@@ -111,7 +111,7 @@ if procesar:
             
             call_deepseek = consultar_ia("deepseek/deepseek-v3.2", prompt_debate, api_key, "Eres DeepSeek Coder. Analiza con lógica matemática estricta la probabilidad de éxito de cada escenario basado en los datos recabados.")
             
-            call_codestral = consultar_ia("anthropic/claude-sonnet-4.5", prompt_debate, api_key, "Eres el Auditor Eficiente. Identifica incongruencias numéricas, datos cruzados falsos o contradicciones entre los reportes previos.")
+            call_codestral = consultar_ia("anthropic/claude-sonnet-5", prompt_debate, api_key, "Eres el Auditor Eficiente. Identifica incongruencias numéricas, datos cruzados falsos o contradicciones entre los reportes previos.")
             
             call_grok = consultar_ia("x-ai/grok-4.3", prompt_debate, api_key, "Eres Grok 3. Evalúa las variables intangibles, el factor de localía, motivación o comportamiento reciente en la disciplina analizada.")
             
@@ -127,7 +127,7 @@ if procesar:
             """
             
             call_claude = consultar_ia(
-                "anthropic/claude-sonnet-4.5", 
+                "anthropic/claude-sonnet-5", 
                 debate_completo, 
                 api_key, 
                 "Eres el Analista Clínico de Anthropic. Actúas como el Juez Supremo del Coliseo. Filtra de forma definitiva todo el debate de tus compañeros y extrae con precisión matemática las 2 o 3 mejores opciones/jugadas con mayor factor de ganar en este deporte. Muestra los resultados finales de forma sumamente bonita, limpia y compacta para una pantalla móvil, empleando viñetas y negritas."
