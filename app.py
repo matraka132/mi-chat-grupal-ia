@@ -109,7 +109,7 @@ if procesar:
             Tu tarea: Evalúa críticamente esta información. Analiza las ventajas competitivas reales, tendencias del encuentro y la lógica de las probabilidades para determinar dónde está el verdadero valor del pick, neutralizando sesgos.
             """
             
-            call_deepseek = consultar_ia("anthropic/claude-sonnet-5", prompt_debate, api_key, "Eres DeepSeek Coder. Analiza con lógica matemática estricta la probabilidad de éxito de cada escenario basado en los datos recabados.")
+            call_deepseek = consultar_ia("deepseek/deepseek-v4.1-flash-1017", prompt_debate, api_key, "Eres DeepSeek Coder. Analiza con lógica matemática estricta la probabilidad de éxito de cada escenario basado en los datos recabados.")
             
             call_codestral = consultar_ia("anthropic/claude-sonnet-5", prompt_debate, api_key, "Eres el Auditor Eficiente. Identifica incongruencias numéricas, datos cruzados falsos o contradicciones entre los reportes previos.")
             
