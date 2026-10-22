@@ -117,11 +117,11 @@ if procesar:
             Tu tarea: Evalúa críticamente esta información. Analiza las ventajas competitivas reales, tendencias del encuentro y la lógica de las probabilidades para determinar dónde está el verdadero valor del pick, neutralizando sesgos.
             """
             
-            call_deepseek = consultar_ia("deepseek/deepseek-r1", prompt_debate, api_key, "Eres DeepSeek R1. Analiza con lógica matemática estricta la probabilidad de éxito de cada escenario basado en los datos recabados.")
+            call_deepseek = consultar_ia("deepseek/deepseek-v4-pro", prompt_debate, api_key, "Eres DeepSeek R1. Analiza con lógica matemática estricta la probabilidad de éxito de cada escenario basado en los datos recabados.")
             
-            call_codestral = consultar_ia("mistralai/codestral-2501", prompt_debate, api_key, "Eres el Auditor Eficiente. Identifica incongruencias numéricas, datos cruzados falsos o contradicciones entre los reportes previos.")
+            call_codestral = consultar_ia("mistralai/codestral-2508", prompt_debate, api_key, "Eres el Auditor Eficiente. Identifica incongruencias numéricas, datos cruzados falsos o contradicciones entre los reportes previos.")
             
-            call_grok = consultar_ia("x-ai/grok-2-1212", prompt_debate, api_key, "Eres Grok. Evalúa las variables intangibles, el factor de localía, motivación o comportamiento reciente en la disciplina analizada.")
+            call_grok = consultar_ia("x-ai/grok-4.20", prompt_debate, api_key, "Eres Grok. Evalúa las variables intangibles, el factor de localía, motivación o comportamiento reciente en la disciplina analizada.")
             
             call_gemini = consultar_ia("google/gemini-2.5-pro", prompt_debate, api_key, "Eres Gemini. Procesa todo el volumen masivo de argumentos anteriores para estructurar un panorama contextual completo del evento.")
 
@@ -144,7 +144,7 @@ if procesar:
             """
             
             call_claude = consultar_ia(
-                "anthropic/claude-3.7-sonnet", 
+                "anthropic/claude-sonnet-5.5", 
                 debate_completo, 
                 api_key, 
                 "Eres el Analista Clínico de Anthropic. Actúas como el Juez Supremo del Coliseo. Filtra de forma definitiva todo el debate de tus compañeros y extrae con precisión matemática las 2 o 3 mejores opciones/jugadas con mayor factor de ganar en este deporte. Muestra los resultados finales de forma sumamente bonita, limpia y compacta para una pantalla móvil, empleando viñetas y negritas."
