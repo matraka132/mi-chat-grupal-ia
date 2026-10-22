@@ -126,7 +126,7 @@ if procesar:
             DEBATE TÉCNICO: {call_deepseek['content']} | {call_grok['content']} | {call_gemini['content']}
             """
             
-            call_claude = consultar_ia("deepseek/deepseek-v4.1-flash-1017", debate_completo, api_key, "Eres el Analista Clínico de Anthropic. Actúas como el Juez Supremo del Coliseo. Filtra de forma definitiva todo el debate de tus compañeros y extrae con precisión matemática las 2 o 3 mejores opciones/jugadas con mayor factor de ganar en este deporte. Muestra los resultados finales de forma sumamente bonita, limpia y compacta para una pantalla móvil, empleando viñetas y negritas." )
+            call_claude = consultar_ia("deepseek/deepseek-v4-pro-0813", debate_completo, api_key, "Eres el Analista Clínico de Anthropic. Actúas como el Juez Supremo del Coliseo. Filtra de forma definitiva todo el debate de tus compañeros y extrae con precisión matemática las 2 o 3 mejores opciones/jugadas con mayor factor de ganar en este deporte. Muestra los resultados finales de forma sumamente bonita, limpia y compacta para una pantalla móvil, empleando viñetas y negritas." )
 
         # Renderizado del tablero de luces del escáner en base al estado de la respuesta
         with contenedor_estados:
