@@ -26,7 +26,7 @@ with st.sidebar:
     * **Monitoreo:** Estado de agentes en tiempo real.
     """)
 
-# 3. Función de consulta con validación de estado
+# 3. Función de consulta corregida (Sin el bloqueo del emoji ❌)
 def consultar_ia(model_id, prompt, key, system_prompt="Eres un analista experto."):
     headers = {
         "Authorization": f"Bearer {key.strip()}",
@@ -45,21 +45,30 @@ def consultar_ia(model_id, prompt, key, system_prompt="Eres un analista experto.
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers=headers,
-            data=json.dumps(payload),
+            json=payload, # Usar json=payload es más limpio y seguro que data=json.dumps()
             timeout=90
         )
         if response.status_code == 200:
-            res_text = response.json()["choices"][0]["message"]["content"]
-            if res_text and "❌" not in res_text:
-                return {"status": "OK", "content": res_text}
-        return {"status": "ERROR", "content": f"Error {response.status_code}"}
-    except:
-        return {"status": "ERROR", "content": "Error de conexión"}
+            data = response.json()
+            if "choices" in data and len(data["choices"]) > 0:
+                res_text = data["choices"][0]["message"].get("content", "")
+                if res_text.strip():
+                    return {"status": "OK", "content": res_text}
+            return {"status": "ERROR", "content": "Respuesta vacía del modelo"}
+        else:
+            # Captura el mensaje real de OpenRouter por si un modelo no existe o no hay saldo
+            err_msg = response.json().get("error", {}).get("message", f"HTTP {response.status_code}")
+            return {"status": "ERROR", "content": f"Error API: {err_msg}"}
+    except Exception as e:
+        return {"status": "ERROR", "content": f"Error de conexión: {str(e)}"}
 
-# 4. Entrada de datos universal
+# Función auxiliar para no pasar textos de error a las siguientes fases
+def obtener_contenido_seguro(respuesta):
+    return respuesta["content"] if respuesta["status"] == "OK" else "No disponible (Agente fuera de línea)."
+
+# 4. Entrada de datos universal (Sin duplicar value y key)
 pregunta = st.text_area(
     "✍️ Introduce tu consulta, partido o pega los datos/estadísticas (cualquier deporte):", 
-    value=st.session_state["input_text"],
     key="input_text",
     placeholder="Ej: Análisis del partido de hoy entre X e Y con estos datos... o simplemente una pregunta abierta.",
     height=150
@@ -75,10 +84,9 @@ with col_btn2:
 if procesar:
     if not api_key:
         st.error("⚠️ Falta la API Key en la barra lateral.")
-    elif not pregunta:
+    elif not pregunta.strip():
         st.warning("⚠️ Escribe tu consulta o proporciona datos deportivos primero.")
     else:
-        
         st.write("---")
         st.subheader("📡 Estado del Escaneo de Agentes:")
         
@@ -87,48 +95,62 @@ if procesar:
         with st.spinner('🏛️ El Coliseo está auditando y cruzando la información...'):
             
             # ==========================================
-            # FASE 1: BÚSQUEDA GENERAL E HIPÓTESIS (Tus direcciones)
+            # FASE 1: BÚSQUEDA GENERAL E HIPÓTESIS
             # ==========================================
-            # Si el usuario no dio datos, Perplexity compensa buscando activamente en la web el contexto del deporte/partido indicado.
             prompt_fact = f"Investiga a fondo y extrae el contexto real actual, estadísticas clave, noticias o datos de última hora para la siguiente consulta deportiva: {pregunta}"
             call_perplexity = consultar_ia("perplexity/sonar", prompt_fact, api_key, "Eres el Fact-Checker deportivo universal. Trae datos reales y actualizados de internet para cualquier deporte.")
             
-            call_cohere = consultar_ia("deepseek/deepseek-v3.2", pregunta, api_key, "Eres el Administrador de Datos. Organiza, procesa y cruza de forma matemática la información estadística entregada, buscando patrones de valor.")
+            call_cohere = consultar_ia("deepseek/deepseek-chat", pregunta, api_key, "Eres el Administrador de Datos. Organiza, procesa y cruza de forma matemática la información estadística entregada, buscando patrones de valor.")
             
             call_llama = consultar_ia("meta-llama/llama-3.3-70b-instruct", pregunta, api_key, "Eres el Generalista Deportivo. Ofrece una perspectiva situacional rápida y directa sobre el enfrentamiento o escenario planteado.")
 
             # ==========================================
-            # FASE 2: AUDITORÍA TÉCNICA Y LÓGICA (Tus direcciones)
+            # FASE 2: AUDITORÍA TÉCNICA Y LÓGICA
             # ==========================================
             prompt_debate = f"""
             CONSULTA ORIGINAL: {pregunta}
             
-            REPORTE DE CONTEXTO WEB: {call_perplexity['content'] if call_perplexity['status'] == 'OK' else 'No disponible'}
-            ANÁLISIS ESTADÍSTICO DE ENTRADA: {call_cohere['content'] if call_cohere['status'] == 'OK' else 'No disponible'}
+            REPORTE DE CONTEXTO WEB (Perplexity): {obtener_contenido_seguro(call_perplexity)}
+            ANÁLISIS ESTADÍSTICO (Administrador): {obtener_contenido_seguro(call_cohere)}
+            PERSPECTIVA SITUACIONAL (Llama): {obtener_contenido_seguro(call_llama)}
             
             Tu tarea: Evalúa críticamente esta información. Analiza las ventajas competitivas reales, tendencias del encuentro y la lógica de las probabilidades para determinar dónde está el verdadero valor del pick, neutralizando sesgos.
             """
             
-            call_deepseek = consultar_ia("deepseek/deepseek-v4.1-flash-1017", prompt_debate, api_key, "Eres DeepSeek Coder. Analiza con lógica matemática estricta la probabilidad de éxito de cada escenario basado en los datos recabados.")
+            call_deepseek = consultar_ia("deepseek/deepseek-r1", prompt_debate, api_key, "Eres DeepSeek R1. Analiza con lógica matemática estricta la probabilidad de éxito de cada escenario basado en los datos recabados.")
             
-            call_codestral = consultar_ia("anthropic/claude-sonnet-5", prompt_debate, api_key, "Eres el Auditor Eficiente. Identifica incongruencias numéricas, datos cruzados falsos o contradicciones entre los reportes previos.")
+            call_codestral = consultar_ia("mistralai/codestral-2501", prompt_debate, api_key, "Eres el Auditor Eficiente. Identifica incongruencias numéricas, datos cruzados falsos o contradicciones entre los reportes previos.")
             
-            call_grok = consultar_ia("x-ai/grok-4.6", prompt_debate, api_key, "Eres Grok 3. Evalúa las variables intangibles, el factor de localía, motivación o comportamiento reciente en la disciplina analizada.")
+            call_grok = consultar_ia("x-ai/grok-2-1212", prompt_debate, api_key, "Eres Grok. Evalúa las variables intangibles, el factor de localía, motivación o comportamiento reciente en la disciplina analizada.")
             
-            call_gemini = consultar_ia("anthropic/claude-sonnet-5", prompt_debate, api_key, "Eres Gemini. Procesa todo el volumen masivo de argumentos anteriores para estructurar un panorama contextual completo del evento.")
+            call_gemini = consultar_ia("google/gemini-2.5-pro", prompt_debate, api_key, "Eres Gemini. Procesa todo el volumen masivo de argumentos anteriores para estructurar un panorama contextual completo del evento.")
 
             # ==========================================
-            # FASE 3: EL VEREDICTO DE JUEZ SUPREMO (Tus direcciones)
+            # FASE 3: EL VEREDICTO DE JUEZ SUPREMO
             # ==========================================
             debate_completo = f"""
             CONSULTA DEL EVENTO: {pregunta}
-            DATOS DE HECHOS: {call_perplexity['content']} | {call_cohere['content']}
-            DEBATE TÉCNICO: {call_deepseek['content']} | {call_grok['content']} | {call_gemini['content']}
+            
+            --- FASE 1: DATOS Y HECHOS ---
+            Perplexity: {obtener_contenido_seguro(call_perplexity)}
+            Datos/Patrones: {obtener_contenido_seguro(call_cohere)}
+            Situacional: {obtener_contenido_seguro(call_llama)}
+            
+            --- FASE 2: DEBATE TÉCNICO Y AUDITORÍA ---
+            Lógica Matemática (DeepSeek): {obtener_contenido_seguro(call_deepseek)}
+            Auditoría de Contradicciones (Codestral): {obtener_contenido_seguro(call_codestral)}
+            Variables Intangibles (Grok): {obtener_contenido_seguro(call_grok)}
+            Síntesis Contextual (Gemini): {obtener_contenido_seguro(call_gemini)}
             """
             
-            call_claude = consultar_ia("deepseek/deepseek-v4-pro-0813", debate_completo, api_key, "Eres el Analista Clínico de Anthropic. Actúas como el Juez Supremo del Coliseo. Filtra de forma definitiva todo el debate de tus compañeros y extrae con precisión matemática las 2 o 3 mejores opciones/jugadas con mayor factor de ganar en este deporte. Muestra los resultados finales de forma sumamente bonita, limpia y compacta para una pantalla móvil, empleando viñetas y negritas." )
+            call_claude = consultar_ia(
+                "anthropic/claude-3.7-sonnet", 
+                debate_completo, 
+                api_key, 
+                "Eres el Analista Clínico de Anthropic. Actúas como el Juez Supremo del Coliseo. Filtra de forma definitiva todo el debate de tus compañeros y extrae con precisión matemática las 2 o 3 mejores opciones/jugadas con mayor factor de ganar en este deporte. Muestra los resultados finales de forma sumamente bonita, limpia y compacta para una pantalla móvil, empleando viñetas y negritas."
+            )
 
-        # Renderizado del tablero de luces del escáner en base al estado de la respuesta
+        # Renderizado del tablero de luces del escáner
         with contenedor_estados:
             c1, c2, c3, c4 = st.columns(4)
             with c1:
@@ -139,10 +161,10 @@ if procesar:
                 st.button("🟢 Codestral" if call_codestral["status"] == "OK" else "🔴 Codestral", key="b_code", disabled=True, use_container_width=True)
             with c3:
                 st.button("🟢 Llama 3" if call_llama["status"] == "OK" else "🔴 Llama 3", key="b_llam", disabled=True, use_container_width=True)
-                st.button("🟢 Grok 3" if call_grok["status"] == "OK" else "🔴 Grok 3", key="b_grok", disabled=True, use_container_width=True)
+                st.button("🟢 Grok" if call_grok["status"] == "OK" else "🔴 Grok", key="b_grok", disabled=True, use_container_width=True)
             with c4:
                 st.button("🟢 Gemini" if call_gemini["status"] == "OK" else "🔴 Gemini", key="b_gem", disabled=True, use_container_width=True)
-                st.button("🟢 Claude 3.5" if call_claude["status"] == "OK" else "🔴 Claude 3.5", key="b_clau", disabled=True, use_container_width=True)
+                st.button("🟢 Juez Claude" if call_claude["status"] == "OK" else "🔴 Juez Claude", key="b_clau", disabled=True, use_container_width=True)
 
         # 6. Despliegue del veredicto final conciso
         st.write("---")
@@ -152,4 +174,4 @@ if procesar:
             st.success(call_claude["content"])
             st.balloons()
         else:
-            st.error("⚠️ El Juez Final (Claude) no pudo procesar la conclusión. Verifica el estado de los agentes en el tablero superior.")
+            st.error(f"⚠️ El Juez Final no pudo procesar la conclusión. Detalle técnico: {call_claude['content']}")
