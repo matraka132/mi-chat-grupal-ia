@@ -109,7 +109,7 @@ if procesar:
             Tu tarea: Evalúa críticamente esta información. Analiza las ventajas competitivas reales, tendencias del encuentro y la lógica de las probabilidades para determinar dónde está el verdadero valor del pick, neutralizando sesgos.
             """
             
-            call_deepseek = consultar_ia("deepseek/deepseek-v4-pro-0813", prompt_debate, api_key, "Eres DeepSeek Coder. Analiza con lógica matemática estricta la probabilidad de éxito de cada escenario basado en los datos recabados.")
+            call_deepseek = consultar_ia("anthropic/claude-sonnet-5", prompt_debate, api_key, "Eres DeepSeek Coder. Analiza con lógica matemática estricta la probabilidad de éxito de cada escenario basado en los datos recabados.")
             
             call_codestral = consultar_ia("anthropic/claude-sonnet-5", prompt_debate, api_key, "Eres el Auditor Eficiente. Identifica incongruencias numéricas, datos cruzados falsos o contradicciones entre los reportes previos.")
             
@@ -127,7 +127,7 @@ if procesar:
             """
             
             call_claude = consultar_ia(
-                "deepseek/deepseek-v4-pro-0813", 
+                "deepseek/deepseek-v4.1-flash-1017", 
                 debate_completo, 
                 api_key, 
                 "Eres el Analista Clínico de Anthropic. Actúas como el Juez Supremo del Coliseo. Filtra de forma definitiva todo el debate de tus compañeros y extrae con precisión matemática las 2 o 3 mejores opciones/jugadas con mayor factor de ganar en este deporte. Muestra los resultados finales de forma sumamente bonita, limpia y compacta para una pantalla móvil, empleando viñetas y negritas."
