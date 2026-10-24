@@ -102,7 +102,7 @@ if procesar:
             
             call_cohere = consultar_ia("deepseek/deepseek-chat", pregunta, api_key, "Eres el Administrador de Datos. Organiza, procesa y cruza de forma matemática la información estadística entregada, buscando patrones de valor.")
             
-            call_llama = consultar_ia("meta-llama/llama-3.3-70b-instruct", pregunta, api_key, "Eres el Generalista Deportivo. Ofrece una perspectiva situacional rápida y directa sobre el enfrentamiento o escenario planteado.")
+            call_llama = consultar_ia("google/gemini-2.5-pro", pregunta, api_key, "Eres el Generalista Deportivo. Ofrece una perspectiva situacional rápida y directa sobre el enfrentamiento o escenario planteado.")
 
             # ==========================================
             # FASE 2: AUDITORÍA TÉCNICA Y LÓGICA
