@@ -2,52 +2,67 @@ import streamlit as st
 import requests
 from concurrent.futures import ThreadPoolExecutor
 
-# 1. Configuración de pantalla y estado (Optimizado para móvil)
+# 1. Configuración de pantalla y memoria persistente
 st.set_page_config(page_title="Coliseo de Expertos AI", layout="centered")
 
 if "input_text" not in st.session_state:
     st.session_state["input_text"] = ""
+if "saved_api_key" not in st.session_state:
+    st.session_state["saved_api_key"] = ""
 
 def limpiar_datos():
     st.session_state["input_text"] = ""
 
-st.title("🏛️ El Coliseo: Consenso Universal de IA")
-st.markdown("Motor de análisis predictivo y auditoría de datos para cualquier deporte.")
-
-# Función de limpieza extrema para evitar el error "User not found"
 def sanitizar_key(raw_key):
     if not raw_key:
         return ""
-    # Elimina caracteres invisibles Unicode, espacios y comillas
     limpia = "".join(c for c in raw_key if 33 <= ord(c) <= 126)
     limpia = limpia.replace('"', '').replace("'", "")
     if limpia.lower().startswith("bearer"):
         limpia = limpia[6:].strip()
     return limpia
 
-# 2. Barra lateral para la API Key con Verificador en Vivo
+st.title("🏛️ El Coliseo: Consenso Universal de IA")
+st.markdown("Motor de análisis predictivo y auditoría de datos para cualquier deporte.")
+
+# 2. Barra lateral con Memoria Anclada (Evita que se pierda al enviar la pregunta)
 with st.sidebar:
     st.header("🔑 Acceso")
-    # Usamos type="default" opcionalmente o mantenemos password pero sanitizado
-    raw_api_key = st.text_input("Introduce tu API Key de OpenRouter:", type="password")
-    api_key = sanitizar_key(raw_api_key)
+    raw_input = st.text_input(
+        "Introduce tu API Key de OpenRouter:",
+        value=st.session_state["saved_api_key"],
+        type="password"
+    )
+    
+    # Si el usuario pega una clave válida, la anclamos en session_state
+    cleaned = sanitizar_key(raw_input)
+    if cleaned.startswith("sk-or-"):
+        st.session_state["saved_api_key"] = cleaned
+        
+    api_key = st.session_state["saved_api_key"]
     
     if api_key:
-        st.caption(f"🔍 Detectada: `{api_key[:9]}...{api_key[-4:]}` ({len(api_key)} chars)")
-        if st.button("🔌 Probar API Key y Saldo", use_container_width=True):
-            try:
-                r = requests.get(
-                    "https://openrouter.ai/api/v1/auth/key",
-                    headers={"Authorization": f"Bearer {api_key}"},
-                    timeout=10
-                )
-                if r.status_code == 200:
-                    data_k = r.json().get("data", {})
-                    st.success(f"✅ Conectado | Uso: ${data_k.get('usage', 0):.4f}")
-                else:
-                    st.error(f"❌ Error ({r.status_code}): {r.text}")
-            except Exception as e:
-                st.error(f"Error de red: {e}")
+        st.caption(f"🔒 Fijada en memoria: `{api_key[:9]}...{api_key[-4:]}` ({len(api_key)} chars)")
+        col_k1, col_k2 = st.columns(2)
+        with col_k1:
+            if st.button("🔌 Probar Key", use_container_width=True):
+                try:
+                    r = requests.get(
+                        "https://openrouter.ai/api/v1/auth/key",
+                        headers={"Authorization": f"Bearer {api_key}"},
+                        timeout=10
+                    )
+                    if r.status_code == 200:
+                        data_k = r.json().get("data", {})
+                        st.success(f"✅ OK | Uso: ${data_k.get('usage', 0):.4f}")
+                    else:
+                        st.error(f"❌ {r.status_code}: {r.text}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+        with col_k2:
+            if st.button("🗑️ Borrar Key", use_container_width=True):
+                st.session_state["saved_api_key"] = ""
+                st.rerun()
 
     st.write("---")
     st.markdown("""
@@ -57,13 +72,11 @@ with st.sidebar:
     * **Monitoreo:** Estado de agentes en tiempo real.
     """)
 
-# 3. Función de consulta blindada
+# 3. Función de consulta (Usa exactamente el mismo Header limpio que el botón de prueba)
 def consultar_ia(model_id, prompt, key, system_prompt="Eres un analista experto."):
     headers = {
         "Authorization": f"Bearer {key}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://streamlit.app",
-        "X-Title": "Coliseo de Expertos AI"
+        "Content-Type": "application/json"
     }
     payload = {
         "model": model_id,
@@ -85,13 +98,15 @@ def consultar_ia(model_id, prompt, key, system_prompt="Eres un analista experto.
                 res_text = data["choices"][0]["message"].get("content", "")
                 if res_text and res_text.strip():
                     return {"status": "OK", "content": res_text}
+            if "error" in data:
+                return {"status": "ERROR", "content": f"Error interno ({model_id}): {data['error'].get('message', data)}"}
             return {"status": "ERROR", "content": "Respuesta vacía del modelo"}
         else:
             try:
                 err_msg = response.json().get("error", {}).get("message", f"HTTP {response.status_code}")
             except Exception:
                 err_msg = f"HTTP {response.status_code}: {response.text[:100]}"
-            return {"status": "ERROR", "content": f"Error API ({model_id}): {err_msg}"}
+            return {"status": "ERROR", "content": f"Error API ({model_id}): {err_msg} [Key: ...{key[-4:]}]"}
     except Exception as e:
         return {"status": "ERROR", "content": f"Error de conexión ({model_id}): {str(e)}"}
 
@@ -112,12 +127,10 @@ with col_btn1:
 with col_btn2:
     st.button("🔄 Reiniciar", on_click=limpiar_datos, use_container_width=True)
 
-# 5. Flujo de Procesamiento Universal (Con ejecución paralela por fases)
+# 5. Flujo de Procesamiento Universal
 if procesar:
     if not api_key:
         st.error("⚠️ Falta la API Key en la barra lateral.")
-    elif not api_key.startswith("sk-or-"):
-        st.error(f"⚠️ Tu API Key no tiene el formato de OpenRouter (`sk-or-v1-...`). Actualmente empieza por `{api_key[:5]}...`. Verifica que el navegador no haya autocompletado otra contraseña.")
     elif not pregunta.strip():
         st.warning("⚠️ Escribe tu consulta o proporciona datos deportivos primero.")
     else:
@@ -129,7 +142,7 @@ if procesar:
         with st.spinner('🏛️ El Coliseo está auditando y cruzando la información...'):
             
             # ==========================================
-            # FASE 1: BÚSQUEDA GENERAL E HIPÓTESIS (En Paralelo)
+            # FASE 1: BÚSQUEDA GENERAL E HIPÓTESIS
             # ==========================================
             prompt_fact = f"Investiga a fondo y extrae el contexto real actual, estadísticas clave, noticias o datos de última hora para la siguiente consulta deportiva: {pregunta}"
             
@@ -143,7 +156,7 @@ if procesar:
                 call_llama = f_llam.result()
 
             # ==========================================
-            # FASE 2: AUDITORÍA TÉCNICA Y LÓGICA (En Paralelo)
+            # FASE 2: AUDITORÍA TÉCNICA Y LÓGICA
             # ==========================================
             prompt_debate = f"""
             CONSULTA ORIGINAL: {pregunta}
@@ -217,7 +230,6 @@ if procesar:
         else:
             st.error(f"⚠️ El Juez Final no pudo procesar la conclusión. Detalle técnico: {call_claude['content']}")
             
-        # Desplegable opcional para ver qué respondieron o por qué fallaron los demás agentes
         with st.expander("🔎 Ver respuestas individuales y registro de auditoría"):
             for nombre, resp in [
                 ("Perplexity", call_perplexity), ("DeepSeek V3", call_cohere),
