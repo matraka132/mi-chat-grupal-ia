@@ -222,8 +222,8 @@ if procesar:
             
             with ThreadPoolExecutor(max_workers=3) as executor:
                 f_perp = executor.submit(consultar_ia, "perplexity/sonar", prompt_fact, api_key, "Eres el Fact-Checker deportivo universal. Trae datos reales y actualizados de internet para cualquier deporte.")
-                f_coh = executor.submit(consultar_ia, "deepseek/deepseek-chat", pregunta, api_key, "Eres el Administrador de Datos. Organiza, procesa y cruza de forma matemática la información estadística entregada, buscando patrones de valor.")
-                f_llam = executor.submit(consultar_ia, "meta-llama/llama-3.3-70b-instruct", pregunta, api_key, "Eres el Generalista Deportivo. Ofrece una perspectiva situacional rápida y directa sobre el enfrentamiento o escenario planteado.")
+                f_coh = executor.submit(consultar_ia, "deepseek/deepseek-chat-v3.1", pregunta, api_key, "Eres el Administrador de Datos. Organiza, procesa y cruza de forma matemática la información estadística entregada, buscando patrones de valor.")
+                f_llam = executor.submit(consultar_ia, "google/gemini-2.5-pro", pregunta, api_key, "Eres el Generalista Deportivo. Ofrece una perspectiva situacional rápida y directa sobre el enfrentamiento o escenario planteado.")
                 
                 call_perplexity = f_perp.result()
                 call_cohere = f_coh.result()
@@ -243,9 +243,9 @@ if procesar:
             """
             
             with ThreadPoolExecutor(max_workers=4) as executor:
-                f_deep = executor.submit(consultar_ia, "deepseek/deepseek-r1", prompt_debate, api_key, "Eres DeepSeek R1. Analiza con lógica matemática estricta la probabilidad de éxito de cada escenario basado en los datos recabados.")
-                f_code = executor.submit(consultar_ia, "mistralai/codestral-2501", prompt_debate, api_key, "Eres el Auditor Eficiente. Identifica incongruencias numéricas, datos cruzados falsos o contradicciones entre los reportes previos.")
-                f_grok = executor.submit(consultar_ia, "x-ai/grok-2-1212", prompt_debate, api_key, "Eres Grok. Evalúa las variables intangibles, el factor de localía, motivación o comportamiento reciente en la disciplina analizada.")
+                f_deep = executor.submit(consultar_ia, "deepseek/deepseek-v4-pro", prompt_debate, api_key, "Eres DeepSeek R1. Analiza con lógica matemática estricta la probabilidad de éxito de cada escenario basado en los datos recabados.")
+                f_code = executor.submit(consultar_ia, "mistralai/codestral-2508", prompt_debate, api_key, "Eres el Auditor Eficiente. Identifica incongruencias numéricas, datos cruzados falsos o contradicciones entre los reportes previos.")
+                f_grok = executor.submit(consultar_ia, "x-ai/grok-4.20", prompt_debate, api_key, "Eres Grok. Evalúa las variables intangibles, el factor de localía, motivación o comportamiento reciente en la disciplina analizada.")
                 f_gem = executor.submit(consultar_ia, "google/gemini-2.5-pro", prompt_debate, api_key, "Eres Gemini. Procesa todo el volumen masivo de argumentos anteriores para estructurar un panorama contextual completo del evento.")
                 
                 call_deepseek = f_deep.result()
@@ -272,7 +272,7 @@ if procesar:
             """
             
             call_claude = consultar_ia(
-                "anthropic/claude-3.7-sonnet", 
+                "anthropic/claude-sonnet-5.5", 
                 debate_completo, 
                 api_key, 
                 "Eres el Analista Clínico de Anthropic. Actúas como el Juez Supremo del Coliseo. Filtra de forma definitiva todo el debate de tus compañeros y extrae con precisión matemática las 2 o 3 mejores opciones/jugadas con mayor factor de ganar en este deporte. Muestra los resultados finales de forma sumamente bonita, limpia y compacta para una pantalla móvil, empleando viñetas y negritas."
