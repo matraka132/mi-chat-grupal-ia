@@ -25,34 +25,65 @@ def sanitizar_key(raw_key):
         limpia = limpia[6:].strip()
     return limpia
 
-# 2. Barra lateral para la API Key con Verificador en Vivo
+# 2. Barra lateral para la API Key con verificador
 with st.sidebar:
     st.header("🔑 Acceso")
-    # Usamos type="default" opcionalmente o mantenemos password pero sanitizado
-    raw_api_key = st.text_input("Introduce tu API Key de OpenRouter:", type="password")
+
+    raw_api_key = st.text_input(
+        "Introduce tu API Key de OpenRouter:",
+        type="password"
+    )
     api_key = sanitizar_key(raw_api_key)
-    
+
     if api_key:
-        st.caption(f"🔍 Detectada: `{api_key[:9]}...{api_key[-4:]}` ({len(api_key)} chars)")
-        if st.button("🔌 Probar API Key y Saldo", use_container_width=True):
+        st.caption(
+            f"🔍 Detectada: {len(api_key)} caracteres"
+        )
+
+        if st.button(
+            "🔌 Probar API Key y Saldo",
+            use_container_width=True
+        ):
             try:
                 r = requests.get(
                     "https://openrouter.ai/api/v1/auth/key",
-                    headers={"Authorization": f"Bearer {api_key}"},
+                    headers={
+                        "Authorization": f"Bearer {api_key}"
+                    },
                     timeout=10
                 )
+
                 if r.status_code == 200:
                     data_k = r.json().get("data", {})
-                    st.success("✅ Clave reconocida por el verificador")
-st.json({
-    "is_management_key": data_k.get("is_management_key"),
-    "is_provisioning_key": data_k.get("is_provisioning_key"),
-    "expires_at": data_k.get("expires_at")
-})
+
+                    st.success(
+                        "✅ Clave reconocida por el verificador"
+                    )
+
+                    st.json({
+                        "is_management_key": data_k.get(
+                            "is_management_key"
+                        ),
+                        "is_provisioning_key": data_k.get(
+                            "is_provisioning_key"
+                        ),
+                        "expires_at": data_k.get(
+                            "expires_at"
+                        )
+                    })
+
                 else:
-                    st.error(f"❌ Error ({r.status_code}): {r.text}")
-            except Exception as e:
+                    st.error(
+                        f"❌ Error ({r.status_code}): {r.text}"
+                    )
+
+            except requests.RequestException as e:
                 st.error(f"Error de red: {e}")
+
+            except ValueError:
+                st.error(
+                    "El servidor no devolvió un JSON válido."
+                )
 
     st.write("---")
     st.markdown("""
@@ -61,7 +92,6 @@ st.json({
     * **Universal:** Válido para cualquier disciplina deportiva.
     * **Monitoreo:** Estado de agentes en tiempo real.
     """)
-
 # 3. Función de consulta blindada
 def consultar_ia(model_id, prompt, key, system_prompt="Eres un analista experto."):
     headers = {
