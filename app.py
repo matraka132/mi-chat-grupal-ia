@@ -43,7 +43,12 @@ with st.sidebar:
                 )
                 if r.status_code == 200:
                     data_k = r.json().get("data", {})
-                    st.success(f"✅ Conectado | Uso: ${data_k.get('usage', 0):.4f}")
+                    st.success("✅ Clave reconocida por el verificador")
+st.json({
+    "is_management_key": data_k.get("is_management_key"),
+    "is_provisioning_key": data_k.get("is_provisioning_key"),
+    "expires_at": data_k.get("expires_at")
+})
                 else:
                     st.error(f"❌ Error ({r.status_code}): {r.text}")
             except Exception as e:
