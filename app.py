@@ -65,6 +65,7 @@ def consultar_ia(model_id, prompt, key, system_prompt="Eres un analista experto.
         "HTTP-Referer": "https://streamlit.app",
         "X-Title": "Coliseo de Expertos AI"
     }
+
     payload = {
         "model": model_id,
         "messages": [
@@ -72,33 +73,84 @@ def consultar_ia(model_id, prompt, key, system_prompt="Eres un analista experto.
             {"role": "user", "content": prompt}
         ]
     }
+
     try:
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers=headers,
             json=payload,
-            timeout=110
+            timeout=(10, 110)
         )
-        if response.status_code == 200:
-            data = response.json()
-            if "choices" in data and len(data["choices"]) > 0:
-                res_text = data["choices"][0]["message"].get("content", "")
-                if res_text and res_text.strip():
-                    return {"status": "OK", "content": res_text}
-            return {"status": "ERROR", "content": "Respuesta vacía del modelo"}
-        else:
-            try:
-                err_msg = response.json().get("error", {}).get("message", f"HTTP {response.status_code}")
-            except Exception:
-                err_msg = f"HTTP {response.status_code}: {response.text[:100]}"
-            return {"status": "ERROR", "content": f"Error API ({model_id}): {err_msg}"}
-    except Exception as e:
-        return {"status": "ERROR", "content": f"Error de conexión ({model_id}): {str(e)}"}
+    except requests.RequestException as e:
+        return {
+            "status": "ERROR",
+            "content": f"Error de conexión ({model_id}): {e}"
+        }
 
+    # Conservamos el código HTTP y el cuerpo para diagnosticar el fallo.
+    detalle = (
+        f"Modelo: {model_id}\n"
+        f"HTTP: {response.status_code}\n"
+        f"Respuesta del servidor:\n{response.text[:3000]}"
+    )
+
+    if response.status_code != 200:
+        return {
+            "status": "ERROR",
+            "content": detalle
+        }
+
+    try:
+        data = response.json()
+    except ValueError:
+        return {
+            "status": "ERROR",
+            "content": f"El servidor no devolvió JSON válido.\n{detalle}"
+        }
+
+    # También detectamos errores incluidos dentro de una respuesta HTTP 200.
+    if not isinstance(data, dict) or data.get("error"):
+        return {
+            "status": "ERROR",
+            "content": detalle
+        }
+
+    choices = data.get("choices") or []
+    if choices:
+        message = choices[0].get("message") or {}
+        texto = message.get("content")
+
+        if isinstance(texto, str) and texto.strip():
+            return {
+                "status": "OK",
+                "content": texto
+            }
+
+    return {
+        "status": "ERROR",
+        "content": f"El modelo no devolvió texto utilizable.\n{detalle}"
+    }
 def obtener_contenido_seguro(respuesta):
     return respuesta["content"] if respuesta["status"] == "OK" else "No disponible (Agente fuera de línea)."
 
 # 4. Entrada de datos universal
+if st.sidebar.button("🧪 Probar consulta a Sonar"):
+    if not api_key:
+        st.warning("Introduce primero tu clave de OpenRouter.")
+    else:
+        with st.spinner("Probando una consulta real..."):
+            resultado = consultar_ia(
+                "perplexity/sonar",
+                "Responde brevemente: Hola.",
+                api_key
+            )
+
+        if resultado["status"] == "OK":
+            st.success("✅ La consulta al modelo funciona.")
+            st.write(resultado["content"])
+        else:
+            st.error("La consulta ha fallado:")
+            st.code(resultado["content"], language="text")
 pregunta = st.text_area(
     "✍️ Introduce tu consulta, partido o pega los datos/estadísticas (cualquier deporte):", 
     key="input_text",
