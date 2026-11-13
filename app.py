@@ -15,7 +15,6 @@ def limpiar_datos():
 def sanitizar_key(raw_key):
     if not raw_key:
         return ""
-    # Solo caracteres ASCII visibles sin espacios ni comillas
     limpia = "".join(c for c in raw_key.strip() if 33 <= ord(c) <= 126)
     limpia = limpia.replace('"', '').replace("'", "")
     if limpia.lower().startswith("bearer"):
@@ -31,7 +30,7 @@ with st.sidebar:
     raw_input = st.text_input(
         "Introduce tu API Key de OpenRouter:",
         value=st.session_state["saved_api_key"],
-        type="default"  # Visible temporalmente para evitar que el navegador la cambie por una contraseña guardada
+        type="default"
     )
     
     cleaned = sanitizar_key(raw_input)
@@ -139,7 +138,7 @@ with col_btn1:
 with col_btn2:
     st.button("🔄 Reiniciar", on_click=limpiar_datos, use_container_width=True)
 
-# 5. Flujo de Procesamiento Secuencial con Barra de Progreso (Sin fallos de hilos)
+# 5. Flujo de Procesamiento Secuencial con Barra de Progreso
 if procesar:
     if not api_key:
         st.error("⚠️ Falta la API Key en la barra lateral.")
@@ -234,3 +233,8 @@ if procesar:
             st.success(call_claude["content"])
             st.balloons()
         else:
+            st.error(f"⚠️ El Juez Final no pudo procesar la conclusión. Detalle técnico: {call_claude['content']}")
+            
+        with st.expander("🔎 Ver respuestas individuales y registro de auditoría"):
+            for nombre, resp in [
+                ("Perplexity", call_perplexity
